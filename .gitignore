@@ -1,0 +1,16 @@
+# Logs & Temp
+*.log
+*.tmp
+*.bak
+roblox_windows.txt
+
+# OS Junk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+__pycache__/
