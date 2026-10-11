@@ -1,4 +1,4 @@
-# Fish an Anime RNG - Macro & HUD Widget (Desktop Edition v3.0)
+# Fish an Anime RNG - Macro & HUD Widget (Desktop Edition v3.1)
 
 Automation suite for the Roblox game **Fish an Anime RNG**, built with AutoHotkey v2 and featuring a *Liquid Glass* HUD inspired by Nakano Nino.
 Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual Desktop switching).
@@ -9,10 +9,11 @@ Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual 
 
 - **🎃 Automatic Hallows Eve OCR Detection:**
   - Uses native Windows 10/11 UWP API (`Windows.Media.Ocr`). Zero third-party tools required.
+  - Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
   - Continuously monitors the event banner on top of the screen.
   - **Auto Character Swap:** Equips the event character (Slot `2`) whenever Hallows Eve is active to maximize mutations and luck.
-  - **Fail-Safe Protection:** Immediately switches back to the standard character (Slot `1`) as soon as Hallows Eve ends.
-  - Interactive calibration with **`F7`** (2 clicks) and real-time OCR testing with **`F6`**.
+  - **Fail-Safe Protection:** Automatically switches back to normal character state outside events.
+  - Interactive calibration with **`F7`** (click & drag) and real-time OCR testing with **`F6`**.
 
 - **🌙 Fixed 30-Minute Selene Timer:**
   - Synchronized with the fixed 30-minute spawn cycle (`:00` and `:30`).
@@ -42,10 +43,9 @@ Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual 
 | **`F1`** | **Start / Pause** | Toggle macro execution (or click `▶ START`). |
 | **`F2`** | **Exit** | Immediately closes the script and widget. |
 | **`F3`** | **Shop Offset** | Adjust clock offset in seconds for Boost Shop restock. |
-| **`F4`** | **Sync Event** | Reset `NEXT EVENT` timer to `05:00` (or click event timer). |
 | **`F5`** | **Test Shop** | Execute the complete auto-buy routine immediately. |
 | **`F6`** | **Test OCR** | Display text currently recognized in the event box. |
-| **`F7`** | **Calibrate Event Box** | **2 clicks** (top-left, bottom-right) to set event bounding box. |
+| **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
 | **`F8`** | **Calibrate Water** | **1 click** on water spot to save casting coordinates in `config.ini`. |
 
 ---

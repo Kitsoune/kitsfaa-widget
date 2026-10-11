@@ -13,9 +13,6 @@ global ServerClockOffset := 7              ; Seconds after :00, :05 to trigger s
 global ShopCountdown := 0
 global LastTriggeredMinute := -1
 
-global EventCountdown := 300               ; 5-minute relative server event countdown
-global EventClockOffset := 0
-
 global SeleneCycleMinutes := 30            ; Fixed 30-minute Selene cycle (:00 and :30)
 global SeleneDurationMinutes := 5
 global SeleneClockOffsetSeconds := 0
@@ -85,7 +82,7 @@ CX := 55
 
 TitleCtrl := WidgetGui.Add("Text", "x" (CX+30) " y10 w220 h20 Center BackgroundTrans cE8B4E8", "✦ FISH AN ANIME RNG ✦")
 TitleCtrl.SetFont("s10 bold", "Segoe UI")
-VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Desktop v3.0")
+VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Desktop v3.1")
 VerCtrl.SetFont("s7 bold", "Segoe UI")
 
 CloseCtrl := WidgetGui.Add("Text", "x" (CX+252) " y10 w20 h20 Center BackgroundTrans cC490C4", "✕")
@@ -93,34 +90,28 @@ CloseCtrl.SetFont("s9 bold", "Segoe UI")
 CloseCtrl.OnEvent("Click", (*) => ExitApp())
 
 ; Timers & HUD Elements
-WidgetGui.Add("Text", "x" (CX+35) " y42 w85 h16 BackgroundTrans cB8A5C9", "BOOST SHOP")
-global TxtShopTimer := WidgetGui.Add("Text", "x" (CX+130) " y40 w115 h18 Right BackgroundTrans c2EE5C0", "00:00")
+WidgetGui.Add("Text", "x" (CX+35) " y44 w85 h16 BackgroundTrans cB8A5C9", "BOOST SHOP")
+global TxtShopTimer := WidgetGui.Add("Text", "x" (CX+130) " y42 w115 h18 Right BackgroundTrans c2EE5C0", "00:00")
 TxtShopTimer.SetFont("s10 bold", "Consolas")
 
-EventLabel := WidgetGui.Add("Text", "x" (CX+35) " y59 w85 h16 BackgroundTrans cB8A5C9", "NEXT EVENT")
-EventLabel.OnEvent("Click", (*) => ResetEventTimer())
-global TxtEventTimer := WidgetGui.Add("Text", "x" (CX+130) " y57 w115 h18 Right BackgroundTrans cFFD166", "05:00")
-TxtEventTimer.SetFont("s10 bold", "Consolas")
-TxtEventTimer.OnEvent("Click", (*) => ResetEventTimer())
-
-WidgetGui.Add("Text", "x" (CX+35) " y76 w85 h16 BackgroundTrans cB8A5C9", "SELENE")
-global TxtSeleneTimer := WidgetGui.Add("Text", "x" (CX+130) " y76 w115 h18 Right BackgroundTrans cC084FC", "AWAY · 30:00")
+WidgetGui.Add("Text", "x" (CX+35) " y65 w85 h16 BackgroundTrans cB8A5C9", "SELENE")
+global TxtSeleneTimer := WidgetGui.Add("Text", "x" (CX+130) " y65 w115 h18 Right BackgroundTrans cC084FC", "AWAY · 30:00")
 TxtSeleneTimer.SetFont("s9 bold", "Consolas")
 
-WidgetGui.Add("Text", "x" (CX+35) " y93 w85 h16 BackgroundTrans cB8A5C9", "ABILITY")
-global TxtRodAbilityTimer := WidgetGui.Add("Text", "x" (CX+130) " y93 w115 h18 Right BackgroundTrans c2EE5C0", "08:01")
+WidgetGui.Add("Text", "x" (CX+35) " y86 w85 h16 BackgroundTrans cB8A5C9", "ABILITY")
+global TxtRodAbilityTimer := WidgetGui.Add("Text", "x" (CX+130) " y86 w115 h18 Right BackgroundTrans c2EE5C0", "08:01")
 TxtRodAbilityTimer.SetFont("s9 bold", "Consolas")
 TxtRodAbilityTimer.OnEvent("Click", (*) => ManualTriggerRodAbility())
 
-WidgetGui.Add("Text", "x" (CX+35) " y110 w85 h16 BackgroundTrans cB8A5C9", "HALLOWS EVE")
-global TxtHallowsEveStatus := WidgetGui.Add("Text", "x" (CX+120) " y109 w125 h16 Right BackgroundTrans cB8A5C9", "● INACTIVE")
+WidgetGui.Add("Text", "x" (CX+35) " y107 w85 h16 BackgroundTrans cB8A5C9", "HALLOWS EVE")
+global TxtHallowsEveStatus := WidgetGui.Add("Text", "x" (CX+120) " y106 w125 h16 Right BackgroundTrans cB8A5C9", "● INACTIVE")
 TxtHallowsEveStatus.SetFont("s8 bold", "Segoe UI")
 TxtHallowsEveStatus.OnEvent("Click", (*) => ManualOcrCheck())
 
-global TxtStatus := WidgetGui.Add("Text", "x" (CX+30) " y127 w220 h17 Center BackgroundTrans cC490C4", "● PAUSED")
+global TxtStatus := WidgetGui.Add("Text", "x" (CX+30) " y128 w220 h17 Center BackgroundTrans cC490C4", "● PAUSED")
 TxtStatus.SetFont("s9 bold", "Segoe UI")
 
-global BtnToggle := WidgetGui.Add("Text", "x" (CX+30) " y146 w220 h28 Center 0x200 BackgroundTrans cFFFFFF", "▶  START")
+global BtnToggle := WidgetGui.Add("Text", "x" (CX+30) " y148 w220 h28 Center 0x200 BackgroundTrans cFFFFFF", "▶  START")
 BtnToggle.SetFont("s11 bold", "Segoe UI")
 BtnToggle.OnEvent("Click", (*) => ToggleMacroState())
 
@@ -172,7 +163,6 @@ PlayBeep(freq, dur) {
 ; --- Periodic Timer Routine ---
 TimerSecondTick() {
     global ShopCountdown, ServerClockOffset, LastTriggeredMinute
-    global EventCountdown, TxtEventTimer
     global SeleneCycleMinutes, SeleneDurationMinutes, SeleneClockOffsetSeconds
     global SeleneActive, TxtSeleneTimer
     global IsRunning, IsExecutingShop, ShopMode
@@ -206,23 +196,6 @@ TimerSecondTick() {
         TxtShopTimer.SetFont("cFFB347 bold")
     else
         TxtShopTimer.SetFont("c2EE5C0 bold")
-
-    ; Relative Server Event Countdown (5m)
-    if (EventCountdown > 0)
-        EventCountdown--
-    else
-        EventCountdown := 300
-
-    evMins := Floor(EventCountdown / 60)
-    evSecs := Mod(EventCountdown, 60)
-    TxtEventTimer.Text := (evMins < 10 ? "0" evMins : evMins) ":" (evSecs < 10 ? "0" evSecs : evSecs)
-
-    if (EventCountdown <= 10)
-        TxtEventTimer.SetFont("cF85149 bold")
-    else if (EventCountdown <= 45)
-        TxtEventTimer.SetFont("cFFB347 bold")
-    else
-        TxtEventTimer.SetFont("cFFD166 bold")
 
     ; Fixed Selene Cycle (every 30 mins: :00 and :30)
     selMinsPast := Mod(curMin, 30)
@@ -321,6 +294,16 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
         r3 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.4})
         if (r3 && r3.Text != "")
             ocrTexts.Push(r3.Text)
+    }
+    try {
+        r4 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.0, monochrome: 150})
+        if (r4 && r4.Text != "")
+            ocrTexts.Push(r4.Text)
+    }
+    try {
+        r5 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.0, invertcolors: 1})
+        if (r5 && r5.Text != "")
+            ocrTexts.Push(r5.Text)
     }
 
     allText := ""
@@ -766,11 +749,8 @@ CalibrateEventArea() {
         return
     }
 
-    ToolTip("✦ SELECTION ZONE EVENT (F7) ✦`nMaintenez le CLIC GAUCHE, GLISSEZ pour tracer le rectangle, puis RELÂCHEZ !`n(Touche Échap pour annuler)")
-
     while !GetKeyState("LButton", "P") {
         if GetKeyState("Escape", "P") {
-            ToolTip()
             if (didSwitch)
                 SwitchDesktopLeft(DesktopStepsRight)
             return
@@ -788,7 +768,6 @@ CalibrateEventArea() {
     while GetKeyState("LButton", "P") {
         if GetKeyState("Escape", "P") {
             SelectGui.Destroy()
-            ToolTip()
             if (didSwitch)
                 SwitchDesktopLeft(DesktopStepsRight)
             return
@@ -804,7 +783,6 @@ CalibrateEventArea() {
 
     MouseGetPos(&endX, &endY)
     SelectGui.Destroy()
-    ToolTip()
 
     minScreenX := Min(startX, endX)
     maxScreenX := Max(startX, endX)
@@ -823,20 +801,25 @@ CalibrateEventArea() {
     hwnd := WinExist("ahk_exe RobloxPlayerBeta.exe") || WinExist("Roblox")
     WinGetClientPos(&winX, &winY, &cw, &ch, hwnd)
 
+    ; Auto-expand 35% upward so top floating title logo is never clipped
+    topPad := Integer(h * 0.35)
+    adjustedMinScreenY := Max(winY, minScreenY - topPad)
+    adjustedH := maxScreenY - adjustedMinScreenY
+
     clientMinX := minScreenX - winX
-    clientMinY := minScreenY - winY
+    clientMinY := adjustedMinScreenY - winY
 
     EventRatioX := Round(clientMinX / cw, 3)
     EventRatioY := Round(clientMinY / ch, 3)
     EventRatioW := Round(w / cw, 3)
-    EventRatioH := Round(h / ch, 3)
+    EventRatioH := Round(adjustedH / ch, 3)
 
     IniWrite(EventRatioX, IniPath, "Hallows_Eve", "EventRatioX")
     IniWrite(EventRatioY, IniPath, "Hallows_Eve", "EventRatioY")
     IniWrite(EventRatioW, IniPath, "Hallows_Eve", "EventRatioW")
     IniWrite(EventRatioH, IniPath, "Hallows_Eve", "EventRatioH")
 
-    det := DetectHallowsEveInRect(minScreenX, minScreenY, w, h)
+    det := DetectHallowsEveInRect(minScreenX, adjustedMinScreenY, w, adjustedH)
     detSummary := det.found ? "YES (🎃 ACTIVE)" : "NO (Normal event or idle)"
 
     MsgBox(
@@ -977,15 +960,7 @@ F3:: {
     }
 }
 
-F4:: ResetEventTimer()
 
-ResetEventTimer() {
-    global EventCountdown, TxtEventTimer
-    EventCountdown := 300
-    TxtEventTimer.Text := "05:00"
-    TxtEventTimer.SetFont("cFFD166 bold")
-    PlayBeep(700, 100)
-}
 
 F5:: DoAutoBuySequence()
 F6:: ManualOcrCheck()
@@ -1042,7 +1017,6 @@ LoadConfig() {
     WaterRatioX := ParseIniFloat(IniRead(IniPath, "Fishing_Settings", "WaterRatioX", 0.324), 0.324)
     WaterRatioY := ParseIniFloat(IniRead(IniPath, "Fishing_Settings", "WaterRatioY", 0.556), 0.556)
     EnableSoundBeep := ParseIniInt(IniRead(IniPath, "Sound_Settings", "EnableSoundBeep", 0), 0)
-    EventClockOffset := ParseIniInt(IniRead(IniPath, "Event_Settings", "EventClockOffsetSeconds", 0), 0)
     EnableHallowsEve := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EnableHallowsEve", 1), 1)
     EventCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EventCharSlot", 2), 2)
     NormalCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "NormalCharSlot", 0), 0)

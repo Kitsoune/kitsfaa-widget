@@ -1,4 +1,4 @@
-# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.0)
+# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.1)
 
 This repository contains two optimized editions of the AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**:
 
@@ -23,9 +23,10 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 
 * **🎃 Hallows Eve OCR Detection (Native `Windows.Media.Ocr`):**
   * Automatic banner text detection without heavy external dependencies.
+  * Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
   * Auto-equips event character (Slot `2`) during Hallows Eve.
-  * Automatically switches back to normal character (Slot `1`) outside event.
-  * Calibrate event bounding box in 2 clicks with **`F7`**; test with **`F6`**.
+  * Automatically switches back to normal character state outside event.
+  * Calibrate event bounding box with sleek click & drag using **`F7`**; test with **`F6`**.
 * **🌙 Fixed 30-Minute Selene Timer:**
   * Synchronized with the fixed 30-minute cycle (`:00` and `:30`).
   * Live status countdown: `ACTIVE 05:00` / `AWAY 25:00`.
@@ -48,10 +49,9 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 | **`F1`** | **Start / Pause** | Toggle macro execution (or click `▶ START`). |
 | **`F2`** | **Exit** | Immediately closes macro and widget. |
 | **`F3`** | **Server Offset** | Adjust shop clock offset in seconds. |
-| **`F4`** | **Sync Event** | Reset `NEXT EVENT` timer to `05:00`. |
 | **`F5`** | **Test Shop** | Run the complete shop purchasing routine. |
 | **`F6`** | **Test OCR** | Display current text recognized by OCR in event box. |
-| **`F7`** | **Calibrate Event Box** | **2 clicks** (top-left, bottom-right) to set event bounding box. |
+| **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
 | **`F8`** | **Calibrate Water** | **1 click** on water spot to set fishing target coordinates. |
 
 ---

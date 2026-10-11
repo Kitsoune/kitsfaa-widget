@@ -1,4 +1,4 @@
-# Fish an Anime RNG - Macro & HUD Widget (Laptop Edition v3.0)
+# Fish an Anime RNG - Macro & HUD Widget (Laptop Edition v3.1)
 
 Automation suite for the Roblox game **Fish an Anime RNG**, built with AutoHotkey v2 and featuring a *Liquid Glass* HUD inspired by Nakano Nino.
 Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated vertical Y-ratios, dedicated 24/7 foreground farming).
@@ -14,9 +14,10 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
 
 - **🎃 Automatic Hallows Eve OCR Detection:**
   - Native OCR scanning via `Windows.Media.Ocr`.
+  - Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
   - Automatically equips the event character (Slot `2`) whenever Hallows Eve is active.
-  - Immediately equips standard character (Slot `1`) once Hallows Eve ends.
-  - Interactive calibration with **`F7`** (2 clicks) and OCR testing with **`F6`**.
+  - Immediately restores normal character state once Hallows Eve ends.
+  - Interactive calibration with **`F7`** (click & drag) and OCR testing with **`F6`**.
 
 - **🌙 Fixed 30-Minute Selene Timer:**
   - Synchronized with the fixed 30-minute spawn cycle (`:00` and `:30`).
@@ -43,10 +44,9 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
 | **`F1`** | **Start / Pause** | Toggle macro execution (or click `▶ START`). |
 | **`F2`** | **Exit** | Immediately closes the script and widget. |
 | **`F3`** | **Shop Offset** | Adjust clock offset in seconds for Boost Shop restock. |
-| **`F4`** | **Sync Event** | Reset `NEXT EVENT` timer to `05:00` (or click event timer). |
 | **`F5`** | **Test Shop** | Execute the complete auto-buy routine immediately. |
 | **`F6`** | **Test OCR** | Display text currently recognized in the event box. |
-| **`F7`** | **Calibrate Event Box** | **2 clicks** (top-left, bottom-right) to set event bounding box. |
+| **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
 | **`F8`** | **Calibrate Water** | **1 click** on water spot to save casting coordinates in `config.ini`. |
 
 ---
