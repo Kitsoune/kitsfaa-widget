@@ -62,3 +62,12 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
    * **Desktop:** run `Desktop\START_MACRO.bat`
    * **Laptop:** run `Laptop\START_MACRO.bat`
 2. Roblox will be focused, the HUD widget appears in top-right corner, and farming begins!
+
+---
+
+## 📜 Credits & License
+
+* **Developer:** **Kitsoune** (Roblox: `Kitsouwune`)
+* **Organization:** **KITS Progress Inc.**
+* **License:** This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute with proper attribution.
+
