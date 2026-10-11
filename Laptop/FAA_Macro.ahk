@@ -351,28 +351,24 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
         allText .= t " `n"
     lower := StrLower(allText)
 
-    ; 1) Event Title signatures:
+    ; 1) Event Title signatures (HALLOWS / EVE):
     hasTitle := InStr(lower, "hallow") 
              || InStr(lower, "allow's") 
              || InStr(lower, "hallows") 
              || RegExMatch(lower, "i)\b(hallow|hallows|eve)\b")
 
-    ; 2) Unique Hallows Eve description mechanics (from live game banner):
-    ; "Characters have a Higher Chance to become Dracula/Demonic/Sinister/Blood/Nightmare/Electric/Zombie/Ghost Mutated! Held Characters can be Turned into a DRACULA!"
-    hasDesc := InStr(lower, "dracula")
-            || InStr(lower, "turned into")
-            || InStr(lower, "turned")
-            || InStr(lower, "held character")
-            || (InStr(lower, "held") && (InStr(lower, "turn") || InStr(lower, "chamc") || InStr(lower, "into")))
-            || (InStr(lower, "higher chance") && (InStr(lower, "mutat") || InStr(lower, "charact") || InStr(lower, "chamc") || InStr(lower, "electric") || InStr(lower, "sinister")))
-            || InStr(lower, "clean character")
-            || InStr(lower, "holding a clean")
-            || (InStr(lower, "demonic") && (InStr(lower, "sinister") || InStr(lower, "blood") || InStr(lower, "nightmare") || InStr(lower, "mutation")))
-            || (InStr(lower, "standalone") && (InStr(lower, "mutation") || InStr(lower, "rare")))
-            || ((InStr(lower, "dracula") || InStr(lower, "demonic")) && (InStr(lower, "2,000") || InStr(lower, "5,000") || InStr(lower, "2000") || InStr(lower, "5000")))
+    ; 2) Exclusive Hallows Eve mechanics (from live game banner):
+    ; "Held Characters can be Turned into a DRACULA!"
+    ; STRICTLY EXCLUDES generic words like 'electric', 'sinister', or generic mutations to prevent false triggers on other events!
+    hasUniquePhrase := InStr(lower, "dracula")
+                    || InStr(lower, "turned into")
+                    || InStr(lower, "held character")
+                    || InStr(lower, "holding a clean")
+                    || (InStr(lower, "held") && InStr(lower, "turn"))
+                    || (InStr(lower, "demonic") && InStr(lower, "dracula"))
 
-    isHallows := hasTitle || hasDesc
-    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDesc}
+    isHallows := hasTitle || hasUniquePhrase
+    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasUniquePhrase}
 }
 
 CheckHallowsEveEvent() {
