@@ -332,16 +332,29 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
     lower := StrLower(allText)
 
     ; 1) Negative Filter / Anti-False Positive Guard:
-    ; Multiple Roblox events (Heaven's Collide, Starfall, etc.) share the "Held Characters" mechanic!
-    ; e.g. Heaven's Collide: "Falling Stars can turn Held Characters ANGELIC or GOLD!"
-    ; If signatures of other known events are present and 'hallow' is absent, reject immediately.
-    isOtherEvent := InStr(lower, "collide")
-                 || InStr(lower, "heaven")
-                 || InStr(lower, "angelic")
-                 || InStr(lower, "starfall")
-                 || InStr(lower, "thunderstorm")
-    if (isOtherEvent && !InStr(lower, "hallow"))
-        return {found: false, method: "Excluded (Other Event)", text: allText, hasTitle: false, hasDesc: false}
+    ; Comprehensive exclusion list based on official Fish an Anime RNG wiki events:
+    ; Random Events: Blizzard, Sweet Dreams, Solar, Lunar, Slime Rain, Thunder
+    ; Rare & Server: Sub Zero, Sakura Season, Lucrative Realization, Complex Matrix, Toxic Wasteland, Forgotten Ruins, Sad Ending, Starfall
+    ; Catch & Ritual: Heaven's Collide, Hell's Gates, Limerence Complexity, Broken Thoughts, Eclipse
+    ; Potion: Cyberspace, Dreamspace
+    otherEvents := [
+        "collide", "heaven", "angelic",
+        "hell's gate", "hells gate", "hell's", "hells",
+        "starfall", "sakura", "sub zero", "blizzard", "thunder",
+        "sweet dream", "slime rain", "toxic waste", "forgotten ruin",
+        "sad ending", "complex matrix", "cyberspace", "dreamspace",
+        "lucrative", "realization", "limerence", "broken thought", "eclipse"
+    ]
+
+    matchedExclusion := ""
+    for ev in otherEvents {
+        if InStr(lower, ev) {
+            matchedExclusion := ev
+            break
+        }
+    }
+    if (matchedExclusion != "" && !InStr(lower, "hallow"))
+        return {found: false, method: "Excluded (" matchedExclusion ")", text: allText, hasTitle: false, hasDesc: false}
 
     ; 2) Event Title signatures (Strictly HALLOWS EVE):
     ; NEVER match 'eve' alone, as 'Event Duration' appears in every single event!
