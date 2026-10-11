@@ -403,12 +403,11 @@ CheckHallowsEveEvent() {
             TxtHallowsEveStatus.SetFont("cFF9D00 bold")
 
             if (IsRunning) {
-                ; Equip clean character in hands and continue fishing
+                ; Hold event character via Key 'é' (Slot 2) without interrupting ongoing fishing
                 ActivateRoblox()
                 Sleep(80)
-                Send(String(EventCharSlot))
-                Sleep(150)
-                StartFishingClick()
+                PressHotbarSlot(EventCharSlot)
+                Sleep(100)
             }
         }
     } else {
@@ -422,13 +421,12 @@ CheckHallowsEveEvent() {
                 TxtHallowsEveStatus.Text := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
                 if (IsRunning && wasActive) {
-                    ; Unequip character by re-clicking/sending EventCharSlot (or switch to NormalCharSlot if set)
+                    ; Release event character by re-pressing Key 'é' (Slot 2)
                     slotToUnequip := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot
                     ActivateRoblox()
                     Sleep(80)
-                    Send(String(slotToUnequip))
-                    Sleep(150)
-                    StartFishingClick()
+                    PressHotbarSlot(slotToUnequip)
+                    Sleep(100)
                 }
             }
         }
@@ -503,6 +501,17 @@ ManualTriggerRodAbility() {
     TxtRodAbilityTimer.Text := "ACTIVATED !"
     TxtRodAbilityTimer.SetFont("cFF9D00 bold")
     PlayBeep(850, 100)
+}
+
+PressHotbarSlot(slotNum) {
+    if (slotNum <= 0)
+        return
+    ; Uses raw physical scancode to guarantee 100% compatibility on AZERTY (é, &, ", etc.) and QWERTY:
+    ; Slot 1 = sc002 (& / 1), Slot 2 = sc003 (é / 2), Slot 3 = sc004 (" / 3)...
+    sc := Format("sc{:03X}", slotNum + 1)
+    Send("{" sc " down}")
+    Sleep(80)
+    Send("{" sc " up}")
 }
 
 StartFishingClick() {
@@ -593,7 +602,7 @@ CheckFishingStateAndAutoFish() {
             ; Not fishing! Re-equip rod (Key 1) and cast into the water
             ActivateRoblox()
             Sleep(80)
-            Send("1")
+            PressHotbarSlot(1)
             Sleep(250)
             StartFishingClick()
         }
@@ -1227,8 +1236,8 @@ ToggleMacroState() {
         if (IsHallowsEveActive) {
             TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
             TxtHallowsEveStatus.SetFont("cFF9D00 bold")
-            Send(String(EventCharSlot))
-            Sleep(150)
+            PressHotbarSlot(EventCharSlot)
+            Sleep(100)
         }
 
         StartFishingClick()
