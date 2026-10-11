@@ -16,8 +16,8 @@ Welcome to **Fish an Anime RNG (FAA) Macro v3.0**, powered by AutoHotkey v2 with
 ### 🎃 Multi-Pass Adaptive OCR & Visual Detection for Hallows Eve
 * Scans the event banner using native WinRT OCR with multi-pass adaptive scaling (1.0x standard, grayscale contrast filter, and 1.4x subtitle pass) plus optional image template matching.
 * Identifies both the Hallows Eve title banner and its unique game mechanics without false positives from other weather or mutation events.
-* **Auto Character Swap:** Equips the event character (Slot `2`) whenever Hallows Eve is detected, continuing fishing seamlessly while holding the character.
-* **Fail-Safe Restoration:** Switches back to the standard character (Slot `1`) outside the event.
+* **Auto Character Toggle:** Equips the clean character (Slot `2`) whenever Hallows Eve is detected, continuing fishing seamlessly while holding the character.
+* **Fail-Safe Restoration:** Re-toggles Slot `2` outside the event to make the character disappear, without ever touching the fishing rod (Slot `1`).
 * **Live Drag-and-Drop Calibration:** Press **`F7`** to draw a translucent purple selection rectangle over the event banner. Test anytime by clicking the HUD label.
 
 ### 🌙 Fixed 30-Minute Selene Timer

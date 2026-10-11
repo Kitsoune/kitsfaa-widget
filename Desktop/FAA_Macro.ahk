@@ -61,7 +61,7 @@ global RodAbilityCountdown := 481
 ; Hallows Eve OCR & Character Swap
 global EnableHallowsEve := 1
 global EventCharSlot := 2                  ; Special event character slot
-global NormalCharSlot := 1                 ; Standard character slot
+global NormalCharSlot := 0                 ; Standard character slot (0 = toggle off EventCharSlot)
 global CheckIntervalSeconds := 4
 global EventRatioX := 0.35
 global EventRatioY := 0.04
@@ -113,7 +113,7 @@ TxtRodAbilityTimer.SetFont("s9 bold", "Consolas")
 TxtRodAbilityTimer.OnEvent("Click", (*) => ManualTriggerRodAbility())
 
 WidgetGui.Add("Text", "x" (CX+35) " y110 w85 h16 BackgroundTrans cB8A5C9", "HALLOWS EVE")
-global TxtHallowsEveStatus := WidgetGui.Add("Text", "x" (CX+120) " y109 w125 h16 Right BackgroundTrans cB8A5C9", "● INACTIVE (Slot 1)")
+global TxtHallowsEveStatus := WidgetGui.Add("Text", "x" (CX+120) " y109 w125 h16 Right BackgroundTrans cB8A5C9", "● INACTIVE")
 TxtHallowsEveStatus.SetFont("s8 bold", "Segoe UI")
 TxtHallowsEveStatus.OnEvent("Click", (*) => ManualOcrCheck())
 
@@ -392,13 +392,13 @@ CheckHallowsEveEvent() {
             if (HallowsEveMissCount >= 2) {
                 IsHallowsEveActive := false
                 HallowsEveMissCount := 0
-                TxtHallowsEveStatus.Text := "● INACTIVE (Slot " NormalCharSlot ")"
+                TxtHallowsEveStatus.Text := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
-
-                ; Switch back to normal character and continue fishing
+                ; Unequip character by re-clicking/sending EventCharSlot (or switch to NormalCharSlot if set)
+                slotToUnequip := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot
                 ActivateRoblox()
                 Sleep(80)
-                Send(String(NormalCharSlot))
+                Send(String(slotToUnequip))
                 Sleep(150)
                 StartFishingClick()
             }
@@ -1045,7 +1045,7 @@ LoadConfig() {
     EventClockOffset := ParseIniInt(IniRead(IniPath, "Event_Settings", "EventClockOffsetSeconds", 0), 0)
     EnableHallowsEve := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EnableHallowsEve", 1), 1)
     EventCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EventCharSlot", 2), 2)
-    NormalCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "NormalCharSlot", 1), 1)
+    NormalCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "NormalCharSlot", 0), 0)
     CheckIntervalSeconds := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "CheckIntervalSeconds", 4), 4)
     EventRatioX := ParseIniFloat(IniRead(IniPath, "Hallows_Eve", "EventRatioX", 0.35), 0.35)
     EventRatioY := ParseIniFloat(IniRead(IniPath, "Hallows_Eve", "EventRatioY", 0.04), 0.04)
