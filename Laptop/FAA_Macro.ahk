@@ -340,7 +340,14 @@ CheckHallowsEveEvent() {
     try {
         ocrResult := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
         detectedText := ocrResult ? ocrResult.Text : ""
-        found := InStr(detectedText, "hallow", false) || InStr(detectedText, "allow", false) || InStr(detectedText, "eve", false)
+        found := InStr(detectedText, "dracula", false) 
+              || InStr(detectedText, "demonic", false) 
+              || InStr(detectedText, "zombie", false) 
+              || InStr(detectedText, "ghost", false) 
+              || InStr(detectedText, "clean character", false) 
+              || InStr(detectedText, "hallow", false) 
+              || InStr(detectedText, "allow", false) 
+              || InStr(detectedText, "eve", false)
 
         if (found) {
             if (!IsHallowsEveActive) {
@@ -348,13 +355,11 @@ CheckHallowsEveEvent() {
                 TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
                 TxtHallowsEveStatus.SetFont("cFF9D00 bold")
 
+                ; Equip clean character in hands (must remain held during Hallows Eve to roll mutations)
                 ActivateRoblox()
                 Sleep(80)
                 Send(String(EventCharSlot))
                 Sleep(150)
-                Send(String(RodSlot))
-                Sleep(150)
-                StartFishingClick()
             }
         } else {
             if (IsHallowsEveActive) {
@@ -362,6 +367,7 @@ CheckHallowsEveEvent() {
                 TxtHallowsEveStatus.Text := "● INACTIVE (Slot " NormalCharSlot ")"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
 
+                ; Switch back to normal character and resume fishing with rod
                 ActivateRoblox()
                 Sleep(80)
                 Send(String(NormalCharSlot))
@@ -442,8 +448,8 @@ ManualTriggerRodAbility() {
 }
 
 CheckFishingWatchdog() {
-    global EnableWatchdog, IsRunning, IsExecutingShop, RodSlotKey
-    if (!EnableWatchdog || !IsRunning || IsExecutingShop)
+    global EnableWatchdog, IsRunning, IsExecutingShop, RodSlotKey, IsHallowsEveActive
+    if (!EnableWatchdog || !IsRunning || IsExecutingShop || IsHallowsEveActive)
         return
 
     if WinActive("ahk_exe RobloxPlayerBeta.exe") || WinActive("Roblox") {
