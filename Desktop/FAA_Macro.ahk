@@ -52,12 +52,6 @@ global AntiAfkInterval := 180
 global LastAntiAfkTick := A_TickCount
 global EnableSoundBeep := 0
 
-; 24/7 Fishing Watchdog
-global EnableWatchdog := 1
-global WatchdogIntervalSeconds := 25
-global RodSlotKey := 1
-global LastWatchdogTick := A_TickCount
-
 ; Rod Ability (Key V)
 global EnableRodAbility := 1
 global RodAbilityKey := "v"
@@ -68,13 +62,13 @@ global RodAbilityCountdown := 481
 global EnableHallowsEve := 1
 global EventCharSlot := 2                  ; Special event character slot
 global NormalCharSlot := 1                 ; Standard character slot
-global RodSlot := 1                        ; Fishing rod slot
 global CheckIntervalSeconds := 4
 global EventRatioX := 0.35
 global EventRatioY := 0.04
 global EventRatioW := 0.30
 global EventRatioH := 0.12
 global IsHallowsEveActive := false
+global HallowsEveMissCount := 0
 global LastOcrCheckTick := 0
 
 LoadConfig()
@@ -183,7 +177,6 @@ TimerSecondTick() {
     global SeleneActive, TxtSeleneTimer
     global IsRunning, IsExecutingShop, ShopMode
     global LastAntiAfkTick, AntiAfkInterval
-    global LastWatchdogTick, WatchdogIntervalSeconds, EnableWatchdog
     global LastOcrCheckTick, CheckIntervalSeconds, EnableHallowsEve
     global EnableRodAbility, RodAbilityCountdown, RodAbilityCooldownSeconds, TxtRodAbilityTimer
 
@@ -289,15 +282,6 @@ TimerSecondTick() {
         }
     }
 
-    ; 24/7 Fishing Watchdog
-    if (EnableWatchdog && IsRunning && !IsExecutingShop) {
-        nowTick := A_TickCount
-        if ((nowTick - LastWatchdogTick) >= (WatchdogIntervalSeconds * 1000)) {
-            LastWatchdogTick := nowTick
-            CheckFishingWatchdog()
-        }
-    }
-
     ; Anti-AFK Jump (Roblox disconnects after 20 minutes)
     if (IsRunning && !IsExecutingShop) {
         nowTick := A_TickCount
@@ -308,12 +292,65 @@ TimerSecondTick() {
     }
 }
 
-; --- Hallows Eve OCR Detection & Character Swap ---
+; --- Hallows Eve Detection Engine & Character Swap ---
+DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
+    ; Method 1: ImageSearch (Fastest & 100% precision if reference asset exists)
+    assetPath := A_ScriptDir "\assets\hallows_eve.png"
+    if FileExist(assetPath) {
+        CoordMode("Pixel", "Screen")
+        if ImageSearch(&fX, &fY, screenX, screenY, screenX + screenW, screenY + screenH, "*40 " assetPath)
+            return {found: true, method: "ImageSearch", text: "[Matched assets\hallows_eve.png]"}
+    }
+
+    ; Method 2: Multi-pass Adaptive OCR (Windows UWP OCR)
+    ; Pass 1: Standard 1.0x (best for large bold game title fonts and normal text)
+    ; Pass 2: Grayscale 1.0x (removes color gradient noise in stylized 3D fonts)
+    ; Pass 3: 1.4x scale (best for smaller subtitle / description text)
+    ocrTexts := []
+    try {
+        r1 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.0})
+        if (r1 && r1.Text != "")
+            ocrTexts.Push(r1.Text)
+    }
+    try {
+        r2 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.0, grayscale: 1})
+        if (r2 && r2.Text != "")
+            ocrTexts.Push(r2.Text)
+    }
+    try {
+        r3 := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 1.4})
+        if (r3 && r3.Text != "")
+            ocrTexts.Push(r3.Text)
+    }
+
+    allText := ""
+    for t in ocrTexts
+        allText .= t " `n"
+    lower := StrLower(allText)
+
+    ; 1) Event Title signatures:
+    hasTitle := InStr(lower, "hallow") 
+             || InStr(lower, "allow's") 
+             || InStr(lower, "hallows") 
+             || RegExMatch(lower, "i)\b(hallow|hallows|eve)\b")
+
+    ; 2) Unique Hallows Eve description mechanics:
+    ; "While holding a clean Character, rolls every second for rare standalone mutations: 1 in 2,000 for DRACULA and 1 in 5,000 for DEMONIC!"
+    hasDesc := InStr(lower, "clean character")
+            || InStr(lower, "holding a clean")
+            || (InStr(lower, "clean") && (InStr(lower, "dracula") || InStr(lower, "demonic") || InStr(lower, "mutation")))
+            || (InStr(lower, "standalone") && (InStr(lower, "mutation") || InStr(lower, "rare")))
+            || ((InStr(lower, "dracula") || InStr(lower, "demonic")) && (InStr(lower, "2,000") || InStr(lower, "5,000") || InStr(lower, "2000") || InStr(lower, "5000")))
+
+    isHallows := hasTitle || hasDesc
+    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDesc}
+}
+
 CheckHallowsEveEvent() {
     global EnableHallowsEve, IsRunning, IsExecutingShop
     global EventRatioX, EventRatioY, EventRatioW, EventRatioH
-    global EventCharSlot, NormalCharSlot, RodSlot
-    global IsHallowsEveActive, TxtHallowsEveStatus
+    global EventCharSlot, NormalCharSlot
+    global IsHallowsEveActive, TxtHallowsEveStatus, HallowsEveMissCount
 
     if (!EnableHallowsEve || !IsRunning || IsExecutingShop)
         return
@@ -332,47 +369,40 @@ CheckHallowsEveEvent() {
     if (screenW <= 10 || screenH <= 10)
         return
 
-    try {
-        ocrResult := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
-        detectedText := ocrResult ? ocrResult.Text : ""
-        found := InStr(detectedText, "dracula", false) 
-              || InStr(detectedText, "demonic", false) 
-              || InStr(detectedText, "zombie", false) 
-              || InStr(detectedText, "ghost", false) 
-              || InStr(detectedText, "clean character", false) 
-              || InStr(detectedText, "hallow", false) 
-              || InStr(detectedText, "allow", false) 
-              || InStr(detectedText, "eve", false)
+    det := DetectHallowsEveInRect(screenX, screenY, screenW, screenH)
 
-        if (found) {
-            if (!IsHallowsEveActive) {
-                IsHallowsEveActive := true
-                TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
-                TxtHallowsEveStatus.SetFont("cFF9D00 bold")
+    if (det.found) {
+        HallowsEveMissCount := 0
+        if (!IsHallowsEveActive) {
+            IsHallowsEveActive := true
+            TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
+            TxtHallowsEveStatus.SetFont("cFF9D00 bold")
 
-                ; Equip clean character in hands (must remain held during Hallows Eve to roll mutations)
-                ActivateRoblox()
-                Sleep(80)
-                Send(String(EventCharSlot))
-                Sleep(150)
-            }
-        } else {
-            if (IsHallowsEveActive) {
+            ; Equip clean character in hands and continue fishing
+            ActivateRoblox()
+            Sleep(80)
+            Send(String(EventCharSlot))
+            Sleep(150)
+            StartFishingClick()
+        }
+    } else {
+        if (IsHallowsEveActive) {
+            ; Debounce non-detections (e.g. catch text briefly covering banner)
+            HallowsEveMissCount++
+            if (HallowsEveMissCount >= 2) {
                 IsHallowsEveActive := false
+                HallowsEveMissCount := 0
                 TxtHallowsEveStatus.Text := "● INACTIVE (Slot " NormalCharSlot ")"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
 
-                ; Switch back to normal character and resume fishing with rod
+                ; Switch back to normal character and continue fishing
                 ActivateRoblox()
                 Sleep(80)
                 Send(String(NormalCharSlot))
                 Sleep(150)
-                Send(String(RodSlot))
-                Sleep(150)
                 StartFishingClick()
             }
         }
-    } catch {
     }
 }
 
@@ -391,13 +421,17 @@ ManualOcrCheck() {
     screenW := Integer(cw * EventRatioW)
     screenH := Integer(ch * EventRatioH)
 
-    testText := ""
-    try {
-        ocrRes := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
-        if (ocrRes)
-            testText := ocrRes.Text
-    }
-    MsgBox("OCR text detected in event box (Scale 2x):`n`"" testText "`"`n`nCoordinates: X=" screenX " Y=" screenY " W=" screenW " H=" screenH, "OCR Event Check", "Iconi")
+    det := DetectHallowsEveInRect(screenX, screenY, screenW, screenH)
+    detSummary := det.found ? "YES (🎃 ACTIVE)" : "NO (Normal event or idle)"
+    MsgBox(
+        "✦ OCR EVENT CHECK RESULT ✦`n`n"
+        "Coordinates: X=" screenX " Y=" screenY " W=" screenW " H=" screenH "`n"
+        "Detection Method: " det.method "`n"
+        "Hallows Eve Detected: " detSummary "`n`n"
+        "✦ Recognized Text (Multi-pass):`n`"" Trim(det.text) "`"",
+        "OCR Event Check",
+        "Iconi"
+    )
 }
 
 ToggleShopMode() {
@@ -440,18 +474,6 @@ ManualTriggerRodAbility() {
     TxtRodAbilityTimer.Text := "ACTIVATED !"
     TxtRodAbilityTimer.SetFont("cFF9D00 bold")
     PlayBeep(850, 100)
-}
-
-CheckFishingWatchdog() {
-    global EnableWatchdog, IsRunning, IsExecutingShop, RodSlotKey, IsHallowsEveActive
-    if (!EnableWatchdog || !IsRunning || IsExecutingShop || IsHallowsEveActive)
-        return
-
-    if WinActive("ahk_exe RobloxPlayerBeta.exe") || WinActive("Roblox") {
-        Send(String(RodSlotKey))
-        Sleep(100)
-        StartFishingClick()
-    }
 }
 
 StartFishingClick() {
@@ -814,14 +836,18 @@ CalibrateEventArea() {
     IniWrite(EventRatioW, IniPath, "Hallows_Eve", "EventRatioW")
     IniWrite(EventRatioH, IniPath, "Hallows_Eve", "EventRatioH")
 
-    testText := ""
-    try {
-        ocrRes := OCR.FromRect(minScreenX, minScreenY, w, h, {scale: 2.0})
-        if (ocrRes)
-            testText := ocrRes.Text
-    }
+    det := DetectHallowsEveInRect(minScreenX, minScreenY, w, h)
+    detSummary := det.found ? "YES (🎃 ACTIVE)" : "NO (Normal event or idle)"
 
-    MsgBox("Event box calibrated successfully!`n`nRatios: X=" EventRatioX " | Y=" EventRatioY " | W=" EventRatioW " | H=" EventRatioH "`n`nOCR text recognized (Scale 2x):`n`"" testText "`"", "Calibration Success", "Iconi")
+    MsgBox(
+        "Event box calibrated successfully!`n`n"
+        "Ratios: X=" EventRatioX " | Y=" EventRatioY " | W=" EventRatioW " | H=" EventRatioH "`n`n"
+        "Detection Method: " det.method "`n"
+        "Hallows Eve Detected: " detSummary "`n`n"
+        "✦ Recognized Text (Multi-pass):`n`"" Trim(det.text) "`"",
+        "Calibration Success",
+        "Iconi"
+    )
 
     if (didSwitch) {
         SwitchDesktopLeft(DesktopStepsRight)
@@ -891,7 +917,7 @@ ActivateRoblox() {
 }
 
 ToggleMacroState() {
-    global IsRunning, TxtStatus, BtnToggle, NormalCharSlot, RodSlot
+    global IsRunning, TxtStatus, BtnToggle
     global AutoSwitchDesktop, DesktopStepsRight, DesktopSwitchDelayMs
     IsRunning := !IsRunning
     if (IsRunning) {
@@ -909,12 +935,6 @@ ToggleMacroState() {
 
         ActivateRoblox()
         Sleep(250)
-
-        ; Equip standard character and fishing rod at startup
-        Send(String(NormalCharSlot))
-        Sleep(150)
-        Send(String(RodSlot))
-        Sleep(150)
 
         if (EnableRodAbility) {
             TriggerRodAbility()
@@ -1023,15 +1043,9 @@ LoadConfig() {
     WaterRatioY := ParseIniFloat(IniRead(IniPath, "Fishing_Settings", "WaterRatioY", 0.556), 0.556)
     EnableSoundBeep := ParseIniInt(IniRead(IniPath, "Sound_Settings", "EnableSoundBeep", 0), 0)
     EventClockOffset := ParseIniInt(IniRead(IniPath, "Event_Settings", "EventClockOffsetSeconds", 0), 0)
-
-    EnableWatchdog := ParseIniInt(IniRead(IniPath, "Fishing_Watchdog", "EnableWatchdog", 1), 1)
-    WatchdogIntervalSeconds := ParseIniInt(IniRead(IniPath, "Fishing_Watchdog", "WatchdogIntervalSeconds", 25), 25)
-    RodSlotKey := ParseIniInt(IniRead(IniPath, "Fishing_Watchdog", "RodSlotKey", 1), 1)
-
     EnableHallowsEve := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EnableHallowsEve", 1), 1)
     EventCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "EventCharSlot", 2), 2)
     NormalCharSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "NormalCharSlot", 1), 1)
-    RodSlot := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "RodSlot", 1), 1)
     CheckIntervalSeconds := ParseIniInt(IniRead(IniPath, "Hallows_Eve", "CheckIntervalSeconds", 4), 4)
     EventRatioX := ParseIniFloat(IniRead(IniPath, "Hallows_Eve", "EventRatioX", 0.35), 0.35)
     EventRatioY := ParseIniFloat(IniRead(IniPath, "Hallows_Eve", "EventRatioY", 0.04), 0.04)
