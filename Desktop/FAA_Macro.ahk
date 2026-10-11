@@ -177,13 +177,15 @@ PlayBeep(freq, dur) {
 
 ; --- Periodic Timer Routine ---
 TimerSecondTick() {
-    global ShopCountdown, ServerClockOffset, LastTriggeredMinute
+    global ShopCountdown, ServerClockOffset, LastTriggeredMinute, TxtShopTimer
     global SeleneCycleMinutes, SeleneDurationMinutes, SeleneClockOffsetSeconds
     global SeleneActive, TxtSeleneTimer
     global IsRunning, IsExecutingShop, ShopMode
     global LastAntiAfkTick, AntiAfkInterval
     global LastOcrCheckTick, CheckIntervalSeconds, EnableHallowsEve
     global EnableRodAbility, RodAbilityCountdown, RodAbilityCooldownSeconds, TxtRodAbilityTimer
+    global EnableAutoRebirth, RebirthIntervalMinutes, LastRebirthTick
+    global EnableAutoFishCheck, LastWatchdogTick
 
     curMin := Integer(A_Min)
     curSec := Integer(A_Sec)
@@ -1345,7 +1347,7 @@ LoadConfig() {
     Buy_Selene_Luck3 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Luck_Lvl3", 1), 1)
     Buy_Selene_Heavens := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_HeavensCollide", 1), 1)
     Buy_Selene_Luck2 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Luck_Lvl2", 1), 1)
-    Buy_Food_Lvl1 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Food_Lvl1", 1), 1)
+    Buy_Selene_Food1 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Food_Lvl1", 1), 1)
 
     ; Auto-Rebirth
     EnableAutoRebirth := ParseIniInt(IniRead(IniPath, "Auto_Rebirth", "EnableAutoRebirth", 1), 1)
