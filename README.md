@@ -6,12 +6,12 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 
 ## 📁 Available Releases
 
-### 1. **[PC_Fixe/](PC_Fixe/) (Desktop Edition)**
+### 1. **[Desktop/](Desktop/)**
 * Tailored for high-resolution wide desktop screens.
 * 3-tick wheel scroll for standard full-height shop interface.
 * Automatic Windows Virtual Desktop switching (Desktop 1 <-> Desktop 3).
 
-### 2. **[PC_Portable/](PC_Portable/) (Laptop Edition)**
+### 2. **[Laptop/](Laptop/)**
 * Tailored for compact laptop screens running **24/7 dedicated to Roblox**.
 * 2-tick stepped wheel scroll to prevent button clipping.
 * Adaptive vertical Y-ratios for Cash, Gems, and Special potions.
@@ -59,6 +59,6 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 ## 🚀 How to Run
 
 1. Open your machine folder:
-   * **Desktop:** run `PC_Fixe\START_MACRO.bat`
-   * **Laptop:** run `PC_Portable\START_MACRO.bat`
+   * **Desktop:** run `Desktop\START_MACRO.bat`
+   * **Laptop:** run `Laptop\START_MACRO.bat`
 2. Roblox will be focused, the HUD widget appears in top-right corner, and farming begins!
