@@ -1,3 +1,7 @@
+# Local user configs (screen calibrations & custom offsets)
+config.ini
+*/config.ini
+
 # Logs & Temp
 *.log
 *.tmp

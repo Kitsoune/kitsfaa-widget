@@ -335,7 +335,7 @@ CheckHallowsEveEvent() {
     try {
         ocrResult := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
         detectedText := ocrResult ? ocrResult.Text : ""
-        found := InStr(detectedText, "Hallows", false) || InStr(detectedText, "Hallow", false) || InStr(detectedText, "Eve", false)
+        found := InStr(detectedText, "hallow", false) || InStr(detectedText, "allow", false) || InStr(detectedText, "eve", false)
 
         if (found) {
             if (!IsHallowsEveActive) {
@@ -979,6 +979,8 @@ ParseIniFloat(val, defaultVal := 0.0) {
 
 LoadConfig() {
     global
+    if !FileExist(IniPath) && FileExist(A_ScriptDir "\config.example.ini")
+        FileCopy(A_ScriptDir "\config.example.ini", IniPath)
     if !FileExist(IniPath)
         return
 
