@@ -322,11 +322,14 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
              || InStr(lower, "hallows") 
              || RegExMatch(lower, "i)\b(hallow|hallows|eve)\b")
 
-    ; 2) Unique Hallows Eve description mechanics:
-    ; "While holding a clean Character, rolls every second for rare standalone mutations: 1 in 2,000 for DRACULA and 1 in 5,000 for DEMONIC!"
-    hasDesc := InStr(lower, "clean character")
+    ; 2) Unique Hallows Eve description mechanics (from live game banner):
+    ; "Characters have a Higher Chance to become Dracula/Demonic/Sinister/Blood/Nightmare/Electric/Zombie/Ghost Mutated! Held Characters can be Turned into a DRACULA!"
+    hasDesc := InStr(lower, "dracula")
+            || InStr(lower, "turned into")
+            || InStr(lower, "held character")
+            || InStr(lower, "clean character")
             || InStr(lower, "holding a clean")
-            || (InStr(lower, "clean") && (InStr(lower, "dracula") || InStr(lower, "demonic") || InStr(lower, "mutation")))
+            || (InStr(lower, "demonic") && (InStr(lower, "sinister") || InStr(lower, "blood") || InStr(lower, "nightmare") || InStr(lower, "mutation")))
             || (InStr(lower, "standalone") && (InStr(lower, "mutation") || InStr(lower, "rare")))
             || ((InStr(lower, "dracula") || InStr(lower, "demonic")) && (InStr(lower, "2,000") || InStr(lower, "5,000") || InStr(lower, "2000") || InStr(lower, "5000")))
 
