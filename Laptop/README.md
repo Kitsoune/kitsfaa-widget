@@ -1,11 +1,42 @@
-# Fish an Anime RNG - Macro & HUD Widget (Laptop Edition v3.1)
+# Fish an Anime RNG - Macro & HUD Widget (Laptop Edition v3.2)
 
 Automation suite for the Roblox game **Fish an Anime RNG**, built with AutoHotkey v2 and featuring a *Liquid Glass* HUD inspired by Nakano Nino.
 Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated vertical Y-ratios, dedicated 24/7 foreground farming).
 
 ---
 
+## 📋 Prerequisites & Requirements
+
+- **Windows 10 / 11** (64-bit recommended)
+- **AutoHotkey v2** (v2.0 or newer):
+  - **Quick Install:** Simply double-click `START_MACRO.bat` - if AutoHotkey v2 is not detected, an interactive assistant will offer to install it automatically via `winget` or open the official download page.
+  - **Manual Install:** Run in PowerShell/CMD:
+    ```cmd
+    winget install AutoHotkey.AutoHotkey
+    ```
+    Or download directly from [AutoHotkey Official Website](https://www.autohotkey.com/v2/).
+- **Roblox Client** (Windowed or Fullscreen)
+
+---
+
 ## 🚀 Laptop & 24/7 Farming Optimizations
+
+- **✨ 100% Robux-Safe Auto-Rebirth:**
+  - Automated hourly rebirth routine (`RebirthIntervalMinutes = 60`) or on-demand via **`F9`**.
+  - Opens sidebar Rebirth menu, strictly clicks the **green Cash button**, and **never** clicks any Robux button.
+  - Closes the modal cleanly and resumes fishing immediately.
+
+- **🌙 Selene's Store Selective Auto-Buy:**
+  - When Selene is active and shop mode is set to Selene, automatically purchases **only** the 4 essential potions:
+    - `Luck Potion Lvl. 3` (Gems)
+    - `Heaven's Collide Potion` (Gems)
+    - `Luck Potion Lvl. 2` (Cash)
+    - `Food Potion Lvl. 1` (Cash)
+  - Clicks 3 times per potion, completely ignores ability cards, and strictly avoids any Robux buttons.
+
+- **🎣 Emergency Auto Fish Fallback & Recovery:**
+  - **Pixel State Check:** Monitors the in-game `Auto Fish` button. Clicks it **only** if it turns grey (inactive), and never touches it while green (active).
+  - **Waiting for Catch Recovery:** Inspects catch status; if fishing is stopped, automatically re-arms rod (Slot `1`) and casts water.
 
 - **💻 Compact Screen Calibration:**
   - Stepped shop scrolling (2 wheel ticks) to prevent buttons from clipping off the screen edge.
@@ -48,14 +79,18 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
 | **`F6`** | **Test OCR** | Display text currently recognized in the event box. |
 | **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
 | **`F8`** | **Calibrate Water** | **1 click** on water spot to save casting coordinates in `config.ini`. |
+| **`F9`** | **Auto-Rebirth** | Trigger 100% Robux-safe Rebirth sequence manually. |
 
 ---
 
 ## 🛠️ Configuration (`config.ini`)
 
+- `[Auto_Rebirth]`: Enable/disable hourly rebirth (`EnableAutoRebirth = 1`, `RebirthIntervalMinutes = 60`).
+- `[Selene_Potions]`: Individual toggles for Luck 3, Heaven's Collide, Luck 2, and Food 1.
+- `[Fishing_Watchdog]`: Emergency Auto Fish click (`AutoFishFallback = 1`) and catch recovery.
 - `[Hallows_Eve]`: Enable/disable OCR, character slots (Event = `2`, Normal = `1`, Rod = `1`).
 - `[Rod_Ability]`: Enable/disable, ability key (`v`), cooldown (`481s`).
 - `[Selene_Settings]`: 30-minute cycle and duration settings.
-- `[Fishing_Watchdog]`: Re-arm interval (20s) and safety check.
 - `[Shop_Settings]`: Shop mode (`Boosts` or `Selene`), delays, and scroll ticks (`ScrollWheelTicks = 2`).
 - `[Virtual_Desktop]`: Keep `0` for dedicated laptop 24/7 foreground.
+

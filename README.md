@@ -1,4 +1,4 @@
-# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.1)
+# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.2)
 
 This repository contains two optimized editions of the AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**:
 
@@ -19,8 +19,35 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 
 ---
 
+## 📋 Prerequisites & Requirements
+
+- **Windows 10 / 11** (64-bit recommended)
+- **AutoHotkey v2** (v2.0 or newer):
+  - **Automated setup:** Double-clicking `START_MACRO.bat` detects whether AutoHotkey v2 is installed. If not, it launches an assisted installer via `winget` or directs you to the official download page.
+  - **Manual command:** Run in PowerShell or CMD:
+    ```cmd
+    winget install AutoHotkey.AutoHotkey
+    ```
+- **Roblox Client** (Windowed or Fullscreen)
+
+---
+
 ## 🌟 Key Features
 
+* **✨ 100% Robux-Safe Auto-Rebirth:**
+  * Fully automated rebirth routine triggered periodically (default: every 60 min) or manually via **`F9`**.
+  * Opens the rebirth modal, strictly targets the **green Cash button**, and **never** clicks any Robux button.
+  * Closes the window cleanly and resumes fishing immediately.
+* **🌙 Selene's Store Selective Auto-Buy:**
+  * When Selene arrives (spawn every 30 mins) and shop mode is set to Selene, automatically buys **only** the 4 selected items:
+    * `Luck Potion Lvl. 3` (Gems)
+    * `Heaven's Collide Potion` (Gems)
+    * `Luck Potion Lvl. 2` (Cash)
+    * `Food Potion Lvl. 1` (Cash)
+  * Uses 3 rapid clicks per potion, completely avoids ability cards, and strictly ignores all Robux purchase options.
+* **🎣 Emergency Auto Fish Fallback & Catch Recovery:**
+  * **Smart Pixel Sensor:** Samples the in-game `Auto Fish` button color. Clicks it **only** if it turns grey (inactive), preserving active fishing if already green.
+  * **Waiting for Catch Recovery:** If fishing is interrupted (no catch text/bar), re-equips fishing rod (Slot `1`) and casts water.
 * **🎃 Hallows Eve OCR Detection (Native `Windows.Media.Ocr`):**
   * Automatic banner text detection without heavy external dependencies.
   * Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
@@ -53,6 +80,7 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 | **`F6`** | **Test OCR** | Display current text recognized by OCR in event box. |
 | **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
 | **`F8`** | **Calibrate Water** | **1 click** on water spot to set fishing target coordinates. |
+| **`F9`** | **Auto-Rebirth** | Trigger 100% Robux-safe Rebirth sequence manually. |
 
 ---
 
@@ -62,6 +90,7 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
    * **Desktop:** run `Desktop\START_MACRO.bat`
    * **Laptop:** run `Laptop\START_MACRO.bat`
 2. Roblox will be focused, the HUD widget appears in top-right corner, and farming begins!
+
 
 ---
 

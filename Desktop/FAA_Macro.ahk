@@ -18,10 +18,25 @@ global SeleneDurationMinutes := 5
 global SeleneClockOffsetSeconds := 0
 global SeleneActive := false
 
-; Potion purchases (1 = Buy, 0 = Skip)
+; Boost Shop Potion purchases (1 = Buy, 0 = Skip)
 global Buy_Cash1 := 1, Buy_Cash2 := 1, Buy_Cash3 := 1
 global Buy_Gems1 := 1, Buy_Gems2 := 1, Buy_Gems3 := 1
 global Buy_Mutation := 1, Buy_FastCatch := 1, Buy_Luck := 1
+
+; Selene Store purchases (1 = Buy, 0 = Skip - Only allowed potions!)
+global Buy_Selene_Luck3 := 1
+global Buy_Selene_Heavens := 1
+global Buy_Selene_Luck2 := 1
+global Buy_Selene_Food1 := 1
+
+; Auto-Rebirth settings
+global EnableAutoRebirth := 1
+global RebirthIntervalMinutes := 60
+global LastRebirthTick := A_TickCount
+
+; Fishing Watchdog & Auto Fish
+global EnableAutoFishCheck := 1
+global LastWatchdogTick := A_TickCount
 
 ; Shop interaction settings
 global ClicksPerButton := 3
@@ -82,7 +97,7 @@ CX := 55
 
 TitleCtrl := WidgetGui.Add("Text", "x" (CX+30) " y10 w220 h20 Center BackgroundTrans cE8B4E8", "✦ FISH AN ANIME RNG ✦")
 TitleCtrl.SetFont("s10 bold", "Segoe UI")
-VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Desktop v3.1")
+VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Desktop v3.2")
 VerCtrl.SetFont("s7 bold", "Segoe UI")
 
 CloseCtrl := WidgetGui.Add("Text", "x" (CX+252) " y10 w20 h20 Center BackgroundTrans cC490C4", "✕")
@@ -119,7 +134,7 @@ global BtnShopMode := WidgetGui.Add("Text", "x" (CX+30) " y176 w220 h17 Center B
 BtnShopMode.SetFont("s8 bold", "Segoe UI")
 BtnShopMode.OnEvent("Click", (*) => ToggleShopMode())
 
-FooterCtrl := WidgetGui.Add("Text", "x" (CX) " y198 w280 h16 Center BackgroundTrans c6A4E72", "F1 · Pause  |  F7 · Event Box  |  F8 · Water  |  F2 · Exit")
+FooterCtrl := WidgetGui.Add("Text", "x" (CX) " y198 w280 h16 Center BackgroundTrans c6A4E72", "F1 · Pause  |  F7 · Event  |  F8 · Water  |  F9 · Rebirth  |  F2 · Exit")
 FooterCtrl.SetFont("s7", "Segoe UI")
 
 OnMessage(0x0201, WM_LBUTTONDOWN)
@@ -261,6 +276,24 @@ TimerSecondTick() {
         if ((nowTick - LastAntiAfkTick) >= (AntiAfkInterval * 1000)) {
             LastAntiAfkTick := nowTick
             DoAntiAfkJump()
+        }
+    }
+
+    ; Auto-Rebirth periodic cycle (default every 60 minutes)
+    if (EnableAutoRebirth && IsRunning && !IsExecutingShop) {
+        nowTick := A_TickCount
+        if ((nowTick - LastRebirthTick) >= (RebirthIntervalMinutes * 60000)) {
+            LastRebirthTick := nowTick
+            SetTimer(DoAutoRebirthSequence, -50)
+        }
+    }
+
+    ; Smart Fishing Watchdog (State check & Auto Fish fallback every 15 seconds)
+    if (EnableAutoFishCheck && IsRunning && !IsExecutingShop) {
+        nowTick := A_TickCount
+        if ((nowTick - LastWatchdogTick) >= 15000) {
+            LastWatchdogTick := nowTick
+            CheckFishingStateAndAutoFish()
         }
     }
 }
@@ -499,6 +532,244 @@ DoAntiAfkJump() {
     }
 }
 
+; --- Smart Fishing Watchdog (State check & Auto Fish fallback) ---
+CheckFishingStateAndAutoFish() {
+    global IsRunning, IsExecutingShop, WaterRatioX, WaterRatioY
+    if (!IsRunning || IsExecutingShop)
+        return
+
+    RobloxPos := GetRobloxClientPos()
+    hwnd := WinExist("ahk_exe RobloxPlayerBeta.exe") || WinExist("Roblox")
+    if (!hwnd || RobloxPos.w < 200 || RobloxPos.h < 200)
+        return
+
+    cw := RobloxPos.w, ch := RobloxPos.h
+    WinGetClientPos(&winX, &winY,,, hwnd)
+
+    ; 1) Auto Fish button grey check:
+    ; Center ratio: X=0.664, Y=0.846
+    afX := Integer(cw * 0.664)
+    afY := Integer(ch * 0.846)
+    CoordMode("Pixel", "Screen")
+    pixColor := PixelGetColor(winX + afX, winY + afY)
+    r := (pixColor >> 16) & 0xFF
+    g := (pixColor >> 8) & 0xFF
+    b := pixColor & 0xFF
+
+    ; If button is NOT green (it turned grey), click it once to re-activate Auto Fish!
+    isGreen := (g > 140 && g > (r * 1.25) && g > (b * 1.25))
+    if (!isGreen) {
+        CoordMode("Mouse", "Client")
+        SendMode("Event")
+        MouseMove(afX, afY, 2)
+        Sleep(80)
+        Click(afX, afY)
+        Sleep(200)
+    }
+
+    ; 2) Check if player is actively fishing:
+    ; Catch bar text area ("Waiting for Catch...", "Click To Catch!", "Fishing...")
+    barScreenX := winX + Integer(cw * 0.35)
+    barScreenY := winY + Integer(ch * 0.68)
+    barScreenW := Integer(cw * 0.30)
+    barScreenH := Integer(ch * 0.08)
+
+    try {
+        rText := OCR.FromRect(barScreenX, barScreenY, barScreenW, barScreenH, {scale: 1.0})
+        lower := StrLower(rText ? rText.Text : "")
+        isFishing := InStr(lower, "catch") || InStr(lower, "wait") || InStr(lower, "fish")
+
+        if (!isFishing) {
+            ; Not fishing! Re-equip rod (Key 1) and cast into the water
+            ActivateRoblox()
+            Sleep(80)
+            Send("1")
+            Sleep(250)
+            StartFishingClick()
+        }
+    }
+}
+
+; --- Auto-Rebirth Routine (100% Robux-Safe) ---
+DoAutoRebirthSequence() {
+    global IsRunning, IsExecutingShop, TxtStatus
+    global AutoSwitchDesktop, DesktopStepsRight, DesktopSwitchDelayMs
+    global LastRebirthTick
+
+    if (IsExecutingShop)
+        return
+    IsExecutingShop := true
+
+    didSwitch := false
+    if (AutoSwitchDesktop && !WinActive("ahk_exe RobloxPlayerBeta.exe")) {
+        SwitchDesktopRight(DesktopStepsRight)
+        didSwitch := true
+        Sleep(DesktopSwitchDelayMs)
+    }
+
+    ActivateRoblox()
+    Sleep(300)
+
+    RobloxPos := GetRobloxClientPos()
+    if (RobloxPos.w < 200 || RobloxPos.h < 200) {
+        if (didSwitch)
+            SwitchDesktopLeft(DesktopStepsRight)
+        IsExecutingShop := false
+        return
+    }
+
+    cw := RobloxPos.w, ch := RobloxPos.h
+    CoordMode("Mouse", "Client")
+    SendMode("Event")
+    SetMouseDelay(2)
+
+    TxtStatus.Text := "AUTO-REBIRTH..."
+    TxtStatus.SetFont("cFF9D00 bold")
+
+    ; Step 1: Open Rebirth menu via left sidebar icon (X=0.034, Y=0.408)
+    sbX := Integer(cw * 0.034)
+    sbY := Integer(ch * 0.408)
+    MouseMove(sbX, sbY, 3)
+    Sleep(200)
+    Click(sbX, sbY)
+    Sleep(700)
+
+    ; Step 2: Click green Rebirth! button on left (X=0.356, Y=0.725)
+    ; NOTE: Robux button is on the right (X=0.620) - we strictly click left!
+    gbX := Integer(cw * 0.356)
+    gbY := Integer(ch * 0.725)
+    MouseMove(gbX, gbY, 3)
+    Sleep(200)
+    Click(gbX, gbY)
+    Sleep(250)
+    Click(gbX, gbY)
+    Sleep(400)
+
+    ; Step 3: Close Rebirth modal via red [X] button (X=0.754, Y=0.174)
+    closeX := Integer(cw * 0.754)
+    closeY := Integer(ch * 0.174)
+    MouseMove(closeX, closeY, 3)
+    Sleep(150)
+    Click(closeX, closeY)
+    Sleep(400)
+
+    LastRebirthTick := A_TickCount
+
+    ; Re-engage fishing
+    if (IsRunning) {
+        TxtStatus.Text := "● FISHING ACTIVE"
+        TxtStatus.SetFont("c2EE5C0 bold")
+        StartFishingClick()
+    } else {
+        TxtStatus.Text := "● PAUSED"
+        TxtStatus.SetFont("cC490C4 bold")
+    }
+
+    if (didSwitch)
+        SwitchDesktopLeft(DesktopStepsRight)
+
+    IsExecutingShop := false
+}
+
+; --- Selene Store Routine (Only buys allowed potions, zero Robux) ---
+DoSeleneBuySequence(cw, ch, scrollCenterX, scrollCenterY, didSwitchDesktop) {
+    global IsRunning, IsExecutingShop, TxtStatus
+    global DesktopStepsRight, ScrollTicks
+    global Buy_Selene_Luck3, Buy_Selene_Heavens, Buy_Selene_Luck2, Buy_Selene_Food1
+
+    ; Selene's Store Coordinates (Calibrated from live screen):
+    ; Item 1: Luck Potion Lvl. 3 (Row 1, Col 1, before scroll) - Gems button on left
+    s1_col1_X := Integer(cw * 0.261)
+    s1_row1_Y := Integer(ch * 0.495)
+
+    ; Step 1: Buy Luck Potion Lvl. 3 before scrolling
+    if (Buy_Selene_Luck3 && IsRunning && IsExecutingShop) {
+        TxtStatus.Text := "Selene Luck Lvl 3..."
+        BuyCashButton(s1_col1_X, s1_row1_Y)
+    }
+
+    if (!IsRunning || !IsExecutingShop) {
+        if (didSwitchDesktop)
+            SwitchDesktopLeft(DesktopStepsRight)
+        IsExecutingShop := false
+        return
+    }
+
+    ; Step 2: Scroll down to reveal Heaven's Collide, Luck Lvl 2, Food Lvl 1
+    needsScroll := (Buy_Selene_Heavens || Buy_Selene_Luck2 || Buy_Selene_Food1)
+    if (needsScroll) {
+        TxtStatus.Text := "SCROLLING DOWN..."
+        SendMode("Event")
+        SetMouseDelay(2)
+        MouseMove(scrollCenterX, scrollCenterY, 3)
+        Sleep(80)
+        Click(scrollCenterX, scrollCenterY)
+        Sleep(120)
+
+        Loop ScrollTicks {
+            if (!IsRunning || !IsExecutingShop) {
+                if (didSwitchDesktop)
+                    SwitchDesktopLeft(DesktopStepsRight)
+                IsExecutingShop := false
+                return
+            }
+            Send("{WheelDown}")
+            Sleep(150)
+        }
+        Sleep(500)
+
+        ; Scrolled coordinates:
+        s2_col2_X := Integer(cw * 0.449)
+        s2_col3_X := Integer(cw * 0.635)
+        s2_row1_Y := Integer(ch * 0.482)
+        s2_row2_Y := Integer(ch * 0.716)
+
+        ; Item 2: Heaven's Collide Potion (Row 1, Col 2) - Gems button on left
+        if (Buy_Selene_Heavens && IsRunning && IsExecutingShop) {
+            TxtStatus.Text := "Heaven's Collide..."
+            BuyCashButton(s2_col2_X, s2_row1_Y)
+        }
+
+        ; Item 3: Luck Potion Lvl. 2 (Row 1, Col 3) - Cash button on left
+        if (Buy_Selene_Luck2 && IsRunning && IsExecutingShop) {
+            TxtStatus.Text := "Selene Luck Lvl 2..."
+            BuyCashButton(s2_col3_X, s2_row1_Y)
+        }
+
+        ; Item 4: Food Potion Lvl. 1 (Row 2, Col 2) - Cash button on left
+        if (Buy_Selene_Food1 && IsRunning && IsExecutingShop) {
+            TxtStatus.Text := "Selene Food Lvl 1..."
+            BuyCashButton(s2_col2_X, s2_row2_Y)
+        }
+    }
+
+    ; Close Selene Store (Red [X] button at X=0.786, Y=0.200)
+    TxtStatus.Text := "CLOSING STORE..."
+    close_X := Integer(cw * 0.786)
+    close_Y := Integer(ch * 0.200)
+    SendMode("Event")
+    SetMouseDelay(2)
+    MouseMove(close_X, close_Y, 3)
+    Sleep(250)
+    Click(close_X, close_Y)
+    Sleep(600)
+
+    ; Re-engage fishing
+    if (IsRunning) {
+        TxtStatus.Text := "● FISHING ACTIVE"
+        TxtStatus.SetFont("c2EE5C0 bold")
+        StartFishingClick()
+    } else {
+        TxtStatus.Text := "● PAUSED"
+        TxtStatus.SetFont("cC490C4 bold")
+    }
+
+    if (didSwitchDesktop)
+        SwitchDesktopLeft(DesktopStepsRight)
+
+    IsExecutingShop := false
+}
+
 BuyCashButton(bx, by) {
     global ClickIntervalMs, ClicksPerButton, IsRunning, IsExecutingShop
     if (!IsRunning || !IsExecutingShop)
@@ -619,6 +890,12 @@ DoAutoBuySequence() {
         if (didSwitchDesktop)
             SwitchDesktopLeft(DesktopStepsRight)
         IsExecutingShop := false
+        return
+    }
+
+    ; Branch to dedicated Selene Store sequence
+    if (ShopMode == "Selene") {
+        DoSeleneBuySequence(cw, ch, scrollCenterX, scrollCenterY, didSwitchDesktop)
         return
     }
 
@@ -969,6 +1246,7 @@ F5:: DoAutoBuySequence()
 F6:: ManualOcrCheck()
 F7:: CalibrateEventArea()
 F8:: CalibrateWaterSpot()
+F9:: DoAutoRebirthSequence()
 
 ParseIniInt(val, defaultVal := 0) {
     cleaned := Trim(RegExReplace(val, "^[ =]+", ""))
@@ -1037,4 +1315,17 @@ LoadConfig() {
     RodAbilityKey := IniRead(IniPath, "Rod_Ability", "RodAbilityKey", "v")
     RodAbilityCooldownSeconds := ParseIniInt(IniRead(IniPath, "Rod_Ability", "RodAbilityCooldownSeconds", 481), 481)
     RodAbilityCountdown := RodAbilityCooldownSeconds
+
+    ; Selene Potions
+    Buy_Selene_Luck3 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Luck_Lvl3", 1), 1)
+    Buy_Selene_Heavens := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_HeavensCollide", 1), 1)
+    Buy_Selene_Luck2 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Luck_Lvl2", 1), 1)
+    Buy_Food_Lvl1 := ParseIniInt(IniRead(IniPath, "Selene_Potions", "Buy_Food_Lvl1", 1), 1)
+
+    ; Auto-Rebirth
+    EnableAutoRebirth := ParseIniInt(IniRead(IniPath, "Auto_Rebirth", "EnableAutoRebirth", 1), 1)
+    RebirthIntervalMinutes := ParseIniInt(IniRead(IniPath, "Auto_Rebirth", "RebirthIntervalMinutes", 60), 60)
+
+    ; Smart Fishing Watchdog
+    EnableAutoFishCheck := ParseIniInt(IniRead(IniPath, "Fishing_Watchdog", "EnableAutoFishCheck", 1), 1)
 }
