@@ -261,8 +261,8 @@ TimerSecondTick() {
         }
     }
 
-    ; Hallows Eve OCR Detection
-    if (EnableHallowsEve && IsRunning && !IsExecutingShop) {
+    ; Hallows Eve OCR Detection (runs even when paused so user sees HUD live status)
+    if (EnableHallowsEve && !IsExecutingShop) {
         nowTick := A_TickCount
         if ((nowTick - LastOcrCheckTick) >= (CheckIntervalSeconds * 1000)) {
             LastOcrCheckTick := nowTick
@@ -354,7 +354,10 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
     ; "Characters have a Higher Chance to become Dracula/Demonic/Sinister/Blood/Nightmare/Electric/Zombie/Ghost Mutated! Held Characters can be Turned into a DRACULA!"
     hasDesc := InStr(lower, "dracula")
             || InStr(lower, "turned into")
+            || InStr(lower, "turned")
             || InStr(lower, "held character")
+            || (InStr(lower, "held") && (InStr(lower, "turn") || InStr(lower, "chamc") || InStr(lower, "into")))
+            || (InStr(lower, "higher chance") && (InStr(lower, "mutat") || InStr(lower, "charact") || InStr(lower, "chamc") || InStr(lower, "electric") || InStr(lower, "sinister")))
             || InStr(lower, "clean character")
             || InStr(lower, "holding a clean")
             || (InStr(lower, "demonic") && (InStr(lower, "sinister") || InStr(lower, "blood") || InStr(lower, "nightmare") || InStr(lower, "mutation")))
@@ -371,7 +374,7 @@ CheckHallowsEveEvent() {
     global EventCharSlot, NormalCharSlot
     global IsHallowsEveActive, TxtHallowsEveStatus, HallowsEveMissCount
 
-    if (!EnableHallowsEve || !IsRunning || IsExecutingShop)
+    if (!EnableHallowsEve || IsExecutingShop)
         return
 
     RobloxPos := GetRobloxClientPos()
@@ -394,32 +397,37 @@ CheckHallowsEveEvent() {
         HallowsEveMissCount := 0
         if (!IsHallowsEveActive) {
             IsHallowsEveActive := true
-            TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
+            TxtHallowsEveStatus.Text := IsRunning ? ("🎃 ACTIVE (Slot " EventCharSlot ")") : "🎃 ACTIVE"
             TxtHallowsEveStatus.SetFont("cFF9D00 bold")
 
-            ; Equip clean character in hands and continue fishing
-            ActivateRoblox()
-            Sleep(80)
-            Send(String(EventCharSlot))
-            Sleep(150)
-            StartFishingClick()
+            if (IsRunning) {
+                ; Equip clean character in hands and continue fishing
+                ActivateRoblox()
+                Sleep(80)
+                Send(String(EventCharSlot))
+                Sleep(150)
+                StartFishingClick()
+            }
         }
     } else {
         if (IsHallowsEveActive) {
             ; Debounce non-detections (e.g. catch text briefly covering banner)
             HallowsEveMissCount++
             if (HallowsEveMissCount >= 2) {
+                wasActive := IsHallowsEveActive
                 IsHallowsEveActive := false
                 HallowsEveMissCount := 0
                 TxtHallowsEveStatus.Text := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
-                ; Unequip character by re-clicking/sending EventCharSlot (or switch to NormalCharSlot if set)
-                slotToUnequip := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot
-                ActivateRoblox()
-                Sleep(80)
-                Send(String(slotToUnequip))
-                Sleep(150)
-                StartFishingClick()
+                if (IsRunning && wasActive) {
+                    ; Unequip character by re-clicking/sending EventCharSlot (or switch to NormalCharSlot if set)
+                    slotToUnequip := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot
+                    ActivateRoblox()
+                    Sleep(80)
+                    Send(String(slotToUnequip))
+                    Sleep(150)
+                    StartFishingClick()
+                }
             }
         }
     }
@@ -1102,6 +1110,16 @@ CalibrateEventArea() {
     det := DetectHallowsEveInRect(minScreenX, adjustedMinScreenY, w, adjustedH)
     detSummary := det.found ? "YES (🎃 ACTIVE)" : "NO (Normal event or idle)"
 
+    if (det.found) {
+        IsHallowsEveActive := true
+        TxtHallowsEveStatus.Text := IsRunning ? ("🎃 ACTIVE (Slot " EventCharSlot ")") : "🎃 ACTIVE"
+        TxtHallowsEveStatus.SetFont("cFF9D00 bold")
+    } else {
+        IsHallowsEveActive := false
+        TxtHallowsEveStatus.Text := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
+        TxtHallowsEveStatus.SetFont("cB8A5C9")
+    }
+
     MsgBox(
         "Event box calibrated successfully!`n`n"
         "Ratios: X=" EventRatioX " | Y=" EventRatioY " | W=" EventRatioW " | H=" EventRatioH "`n`n"
@@ -1202,6 +1220,13 @@ ToggleMacroState() {
         if (EnableRodAbility) {
             TriggerRodAbility()
             RodAbilityCountdown := RodAbilityCooldownSeconds
+        }
+
+        if (IsHallowsEveActive) {
+            TxtHallowsEveStatus.Text := "🎃 ACTIVE (Slot " EventCharSlot ")"
+            TxtHallowsEveStatus.SetFont("cFF9D00 bold")
+            Send(String(EventCharSlot))
+            Sleep(150)
         }
 
         StartFishingClick()
