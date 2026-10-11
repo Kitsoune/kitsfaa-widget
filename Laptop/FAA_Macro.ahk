@@ -338,9 +338,9 @@ CheckHallowsEveEvent() {
         return
 
     try {
-        ocrResult := OCR.FromRect(screenX, screenY, screenW, screenH)
+        ocrResult := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
         detectedText := ocrResult ? ocrResult.Text : ""
-        found := InStr(detectedText, "Hallows", false) || InStr(detectedText, "Eve", false)
+        found := InStr(detectedText, "Hallows", false) || InStr(detectedText, "Hallow", false) || InStr(detectedText, "Eve", false)
 
         if (found) {
             if (!IsHallowsEveActive) {
@@ -392,11 +392,11 @@ ManualOcrCheck() {
 
     testText := ""
     try {
-        ocrRes := OCR.FromRect(screenX, screenY, screenW, screenH)
+        ocrRes := OCR.FromRect(screenX, screenY, screenW, screenH, {scale: 2.0})
         if (ocrRes)
             testText := ocrRes.Text
     }
-    MsgBox("OCR text detected in event box:`n`"" testText "`"`n`nCoordinates: X=" screenX " Y=" screenY " W=" screenW " H=" screenH, "OCR Event Check", "Iconi")
+    MsgBox("OCR text detected in event box (Scale 2x):`n`"" testText "`"`n`nCoordinates: X=" screenX " Y=" screenY " W=" screenW " H=" screenH, "OCR Event Check", "Iconi")
 }
 
 ToggleShopMode() {
@@ -768,41 +768,84 @@ CalibrateEventArea() {
         return
     }
 
-    MsgBox("HALLOWS EVE EVENT DETECTION CALIBRATION:`n`n1. Place cursor on the TOP-LEFT corner of the event banner and CLICK.`n2. Place cursor on the BOTTOM-RIGHT corner and CLICK.`n`nThe bounding box will be saved automatically!", "Event Calibration (F7)", "Iconi")
+    ToolTip("✦ SELECTION ZONE EVENT (F7) ✦`nMaintenez le CLIC GAUCHE, GLISSEZ pour tracer le rectangle, puis RELÂCHEZ !`n(Touche Échap pour annuler)")
 
-    KeyWait("LButton", "D")
-    MouseGetPos(&x1, &y1)
-    KeyWait("LButton", "U")
-    Sleep(300)
+    while !GetKeyState("LButton", "P") {
+        if GetKeyState("Escape", "P") {
+            ToolTip()
+            if (didSwitch)
+                SwitchDesktopLeft(DesktopStepsRight)
+            return
+        }
+        Sleep(20)
+    }
 
-    KeyWait("LButton", "D")
-    MouseGetPos(&x2, &y2)
-    KeyWait("LButton", "U")
+    CoordMode("Mouse", "Screen")
+    MouseGetPos(&startX, &startY)
 
-    minX := Min(x1, x2), maxX := Max(x1, x2)
-    minY := Min(y1, y2), maxY := Max(y1, y2)
+    SelectGui := Gui("-Caption +AlwaysOnTop +ToolWindow -DPIScale +E0x20")
+    SelectGui.BackColor := "0x996696"
+    WinSetTransparent(100, SelectGui)
 
-    cw := RobloxPos.w, ch := RobloxPos.h
-    EventRatioX := Round(minX / cw, 3)
-    EventRatioY := Round(minY / ch, 3)
-    EventRatioW := Round((maxX - minX) / cw, 3)
-    EventRatioH := Round((maxY - minY) / ch, 3)
+    while GetKeyState("LButton", "P") {
+        if GetKeyState("Escape", "P") {
+            SelectGui.Destroy()
+            ToolTip()
+            if (didSwitch)
+                SwitchDesktopLeft(DesktopStepsRight)
+            return
+        }
+        MouseGetPos(&curX, &curY)
+        bx := Min(startX, curX)
+        by := Min(startY, curY)
+        bw := Max(Abs(curX - startX), 1)
+        bh := Max(Abs(curY - startY), 1)
+        SelectGui.Show("x" bx " y" by " w" bw " h" bh " NoActivate")
+        Sleep(15)
+    }
+
+    MouseGetPos(&endX, &endY)
+    SelectGui.Destroy()
+    ToolTip()
+
+    minScreenX := Min(startX, endX)
+    maxScreenX := Max(startX, endX)
+    minScreenY := Min(startY, endY)
+    maxScreenY := Max(startY, endY)
+    w := maxScreenX - minScreenX
+    h := maxScreenY - minScreenY
+
+    if (w < 15 || h < 15) {
+        MsgBox("Selection too small, calibration cancelled.", "Event Calibration", "Icon!")
+        if (didSwitch)
+            SwitchDesktopLeft(DesktopStepsRight)
+        return
+    }
+
+    hwnd := WinExist("ahk_exe RobloxPlayerBeta.exe") || WinExist("Roblox")
+    WinGetClientPos(&winX, &winY, &cw, &ch, hwnd)
+
+    clientMinX := minScreenX - winX
+    clientMinY := minScreenY - winY
+
+    EventRatioX := Round(clientMinX / cw, 3)
+    EventRatioY := Round(clientMinY / ch, 3)
+    EventRatioW := Round(w / cw, 3)
+    EventRatioH := Round(h / ch, 3)
 
     IniWrite(EventRatioX, IniPath, "Hallows_Eve", "EventRatioX")
     IniWrite(EventRatioY, IniPath, "Hallows_Eve", "EventRatioY")
     IniWrite(EventRatioW, IniPath, "Hallows_Eve", "EventRatioW")
     IniWrite(EventRatioH, IniPath, "Hallows_Eve", "EventRatioH")
 
-    hwnd := WinExist("ahk_exe RobloxPlayerBeta.exe") || WinExist("Roblox")
-    WinGetClientPos(&wx, &wy, &cw, &ch, hwnd)
     testText := ""
     try {
-        ocrRes := OCR.FromRect(wx + minX, wy + minY, maxX - minX, maxY - minY)
+        ocrRes := OCR.FromRect(minScreenX, minScreenY, w, h, {scale: 2.0})
         if (ocrRes)
             testText := ocrRes.Text
     }
 
-    MsgBox("Event box calibrated successfully!`n`nRatios: X=" EventRatioX " | Y=" EventRatioY " | W=" EventRatioW " | H=" EventRatioH "`n`nCurrent OCR text detected:`n`"" testText "`"", "Calibration Success", "Iconi")
+    MsgBox("Event box calibrated successfully!`n`nRatios: X=" EventRatioX " | Y=" EventRatioY " | W=" EventRatioW " | H=" EventRatioH "`n`nOCR text recognized (Scale 2x):`n`"" testText "`"", "Calibration Success", "Iconi")
 
     if (didSwitch) {
         SwitchDesktopLeft(DesktopStepsRight)
