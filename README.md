@@ -44,10 +44,6 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
     * `Heaven's Collide Potion` (Gems)
     * `Luck Potion Lvl. 2` (Cash)
     * `Food Potion Lvl. 1` (Cash)
-  * Uses 3 rapid clicks per potion, completely avoids ability cards, and strictly ignores all Robux purchase options.
-* **🎣 Emergency Auto Fish Fallback & Catch Recovery:**
-  * **Smart Pixel Sensor:** Samples the in-game `Auto Fish` button color. Clicks it **only** if it turns grey (inactive), preserving active fishing if already green.
-  * **Waiting for Catch Recovery:** If fishing is interrupted (no catch text/bar), re-equips fishing rod (Slot `1`) and casts water.
 * **🎃 Hallows Eve OCR Detection (Native `Windows.Media.Ocr`):**
   * Automatic banner text detection without heavy external dependencies.
   * Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
@@ -60,8 +56,6 @@ This repository contains two optimized editions of the AutoHotkey v2 macro for t
 * **⚡ Rod Ability Auto-Trigger:**
   * Auto-triggers rod ability (Key **`V`**) on startup and after cooldown (default `481s` = 8m 01s).
   * Real-time countdown on HUD with click-to-trigger support.
-* **🛡️ 24/7 Fishing Watchdog:**
-  * Periodically re-equips fishing rod (Slot `1`) and clicks water to prevent AFK stops and network desync.
 * **🏬 Shop Mode Switcher:**
   * Toggle between `[ MODE : BOOST SHOP ]` and `[ MODE : SELENE SHOP ]` directly on the widget.
 * **🦋 Nakano Nino Liquid Glass HUD:**

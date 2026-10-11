@@ -34,10 +34,6 @@ Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual 
     - `Food Potion Lvl. 1` (Cash)
   - Clicks 3 times per potion, completely ignores ability cards, and strictly avoids any Robux buttons.
 
-- **🎣 Emergency Auto Fish Fallback & Recovery:**
-  - **Pixel State Check:** Monitors the in-game `Auto Fish` button. Clicks it **only** if it turns grey (inactive), and never touches it while green (active).
-  - **Waiting for Catch Recovery:** Inspects catch status; if fishing is stopped, automatically re-arms rod (Slot `1`) and casts water.
-
 - **🎃 Automatic Hallows Eve OCR Detection:**
   - Uses native Windows 10/11 UWP API (`Windows.Media.Ocr`). Zero third-party tools required.
   - Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
@@ -55,9 +51,6 @@ Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual 
   - **Configurable Cooldown:** Default set to **8m 01s** (`481` seconds in `config.ini`).
   - **Real-Time HUD Countdown:** Displays remaining time under `ABILITY`.
   - Manual instant trigger available anytime by clicking the timer directly.
-
-- **🛡️ 24/7 Fishing Watchdog:**
-  - Continuous monitoring: re-equips fishing rod (Slot `1`) and clicks water if interrupted or delayed by server lag.
 
 - **🏬 Shop Mode Selector:**
   - Interactive widget button: toggle between `[ MODE : BOOST SHOP ]` and `[ MODE : SELENE SHOP ]`.
@@ -86,7 +79,6 @@ Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual 
 
 - `[Auto_Rebirth]`: Enable/disable hourly rebirth (`EnableAutoRebirth = 1`, `RebirthIntervalMinutes = 60`).
 - `[Selene_Potions]`: Individual toggles for Luck 3, Heaven's Collide, Luck 2, and Food 1.
-- `[Fishing_Watchdog]`: Emergency Auto Fish click (`AutoFishFallback = 1`) and catch recovery.
 - `[Hallows_Eve]`: Enable/disable OCR, character slots (Event = `2`, Normal = `1`, Rod = `1`).
 - `[Rod_Ability]`: Enable/disable, ability key (`v`), cooldown (`481s`).
 - `[Selene_Settings]`: 30-minute cycle and duration settings.

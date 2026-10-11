@@ -34,10 +34,6 @@ global EnableAutoRebirth := 1
 global RebirthIntervalMinutes := 60
 global LastRebirthTick := A_TickCount
 
-; Fishing Watchdog & Auto Fish
-global EnableAutoFishCheck := 1
-global LastWatchdogTick := A_TickCount
-
 ; Shop interaction settings
 global ClicksPerButton := 3
 global ClickIntervalMs := 700
@@ -190,7 +186,6 @@ TimerSecondTick() {
     global LastOcrCheckTick, CheckIntervalSeconds, EnableHallowsEve
     global EnableRodAbility, RodAbilityCountdown, RodAbilityCooldownSeconds, TxtRodAbilityTimer
     global EnableAutoRebirth, RebirthIntervalMinutes, LastRebirthTick
-    global EnableAutoFishCheck, LastWatchdogTick
 
     curMin := Integer(A_Min)
     curSec := Integer(A_Sec)
@@ -292,16 +287,6 @@ TimerSecondTick() {
         if ((nowTick - LastRebirthTick) >= (RebirthIntervalMinutes * 60000)) {
             LastRebirthTick := nowTick
             SetTimer(DoAutoRebirthSequence, -50)
-        }
-    }
-
-    ; Smart Fishing Watchdog (State check & Auto Fish fallback every 15 seconds)
-    if (EnableAutoFishCheck && IsRunning && !IsExecutingShop) {
-        nowTick := A_TickCount
-        if ((nowTick - LastWatchdogTick) >= 15000) {
-            LastWatchdogTick := nowTick
-            CheckFishingStateAndAutoFish()
-        }
     }
 }
 
@@ -553,63 +538,7 @@ DoAntiAfkJump() {
     }
 }
 
-; --- Smart Fishing Watchdog (State check & Auto Fish fallback) ---
-CheckFishingStateAndAutoFish() {
-    global IsRunning, IsExecutingShop, WaterRatioX, WaterRatioY
-    if (!IsRunning || IsExecutingShop)
-        return
 
-    RobloxPos := GetRobloxClientPos()
-    hwnd := WinExist("ahk_exe RobloxPlayerBeta.exe") || WinExist("Roblox")
-    if (!hwnd || RobloxPos.w < 200 || RobloxPos.h < 200)
-        return
-
-    cw := RobloxPos.w, ch := RobloxPos.h
-    WinGetClientPos(&winX, &winY,,, hwnd)
-
-    ; 1) Auto Fish button grey check:
-    ; Center ratio: X=0.664, Y=0.846
-    afX := Integer(cw * 0.664)
-    afY := Integer(ch * 0.846)
-    CoordMode("Pixel", "Screen")
-    pixColor := PixelGetColor(winX + afX, winY + afY)
-    r := (pixColor >> 16) & 0xFF
-    g := (pixColor >> 8) & 0xFF
-    b := pixColor & 0xFF
-
-    ; If button is NOT green (it turned grey), click it once to re-activate Auto Fish!
-    isGreen := (g > 140 && g > (r * 1.25) && g > (b * 1.25))
-    if (!isGreen) {
-        CoordMode("Mouse", "Client")
-        SendMode("Event")
-        MouseMove(afX, afY, 2)
-        Sleep(80)
-        Click(afX, afY)
-        Sleep(200)
-    }
-
-    ; 2) Check if player is actively fishing:
-    ; Catch bar text area ("Waiting for Catch...", "Click To Catch!", "Fishing...")
-    barScreenX := winX + Integer(cw * 0.35)
-    barScreenY := winY + Integer(ch * 0.68)
-    barScreenW := Integer(cw * 0.30)
-    barScreenH := Integer(ch * 0.08)
-
-    try {
-        rText := OCR.FromRect(barScreenX, barScreenY, barScreenW, barScreenH, {scale: 1.0})
-        lower := StrLower(rText ? rText.Text : "")
-        isFishing := InStr(lower, "catch") || InStr(lower, "wait") || InStr(lower, "fish")
-
-        if (!isFishing) {
-            ; Not fishing! Re-equip rod (Key 1) and cast into the water
-            ActivateRoblox()
-            Sleep(80)
-            PressHotbarSlot(1)
-            Sleep(250)
-            StartFishingClick()
-        }
-    }
-}
 
 ; --- Auto-Rebirth Routine (100% Robux-Safe) ---
 DoAutoRebirthSequence() {
@@ -698,10 +627,10 @@ DoSeleneBuySequence(cw, ch, scrollCenterX, scrollCenterY, didSwitchDesktop) {
     global DesktopStepsRight, ScrollTicks
     global Buy_Selene_Luck3, Buy_Selene_Heavens, Buy_Selene_Luck2, Buy_Selene_Food1
 
-    ; Selene's Store Coordinates (Calibrated from live screen):
+    ; Selene's Store Coordinates (Calibrated with precision from live screen):
     ; Item 1: Luck Potion Lvl. 3 (Row 1, Col 1, before scroll) - Gems button on left
-    s1_col1_X := Integer(cw * 0.261)
-    s1_row1_Y := Integer(ch * 0.495)
+    s1_col1_X := Integer(cw * 0.274)
+    s1_row1_Y := Integer(ch * 0.470)
 
     ; Step 1: Buy Luck Potion Lvl. 3 before scrolling
     if (Buy_Selene_Luck3 && IsRunning && IsExecutingShop) {
@@ -739,11 +668,14 @@ DoSeleneBuySequence(cw, ch, scrollCenterX, scrollCenterY, didSwitchDesktop) {
         }
         Sleep(500)
 
-        ; Scrolled coordinates:
-        s2_col2_X := Integer(cw * 0.449)
+        ; Scrolled coordinates (Exact button centers):
+        ; Row 1: Heaven's Collide (Col 2, Gems) & Luck Potion Lvl 2 (Col 3, Cash)
+        s2_col2_X := Integer(cw * 0.450)
         s2_col3_X := Integer(cw * 0.635)
-        s2_row1_Y := Integer(ch * 0.482)
-        s2_row2_Y := Integer(ch * 0.716)
+        s2_row1_Y := Integer(ch * 0.448)
+
+        ; Row 2: Food Potion Lvl. 1 (Col 2, Cash)
+        s2_row2_Y := Integer(ch * 0.680)
 
         ; Item 2: Heaven's Collide Potion (Row 1, Col 2) - Gems button on left
         if (Buy_Selene_Heavens && IsRunning && IsExecutingShop) {
@@ -764,10 +696,10 @@ DoSeleneBuySequence(cw, ch, scrollCenterX, scrollCenterY, didSwitchDesktop) {
         }
     }
 
-    ; Close Selene Store (Red [X] button at X=0.786, Y=0.200)
+    ; Close Selene Store (Red [X] button at X=0.788, Y=0.190)
     TxtStatus.Text := "CLOSING STORE..."
-    close_X := Integer(cw * 0.786)
-    close_Y := Integer(ch * 0.200)
+    close_X := Integer(cw * 0.788)
+    close_Y := Integer(ch * 0.190)
     SendMode("Event")
     SetMouseDelay(2)
     MouseMove(close_X, close_Y, 3)
@@ -1392,7 +1324,4 @@ LoadConfig() {
     ; Auto-Rebirth
     EnableAutoRebirth := ParseIniInt(IniRead(IniPath, "Auto_Rebirth", "EnableAutoRebirth", 1), 1)
     RebirthIntervalMinutes := ParseIniInt(IniRead(IniPath, "Auto_Rebirth", "RebirthIntervalMinutes", 60), 60)
-
-    ; Smart Fishing Watchdog
-    EnableAutoFishCheck := ParseIniInt(IniRead(IniPath, "Fishing_Watchdog", "EnableAutoFishCheck", 1), 1)
 }

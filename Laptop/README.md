@@ -34,10 +34,6 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
     - `Food Potion Lvl. 1` (Cash)
   - Clicks 3 times per potion, completely ignores ability cards, and strictly avoids any Robux buttons.
 
-- **🎣 Emergency Auto Fish Fallback & Recovery:**
-  - **Pixel State Check:** Monitors the in-game `Auto Fish` button. Clicks it **only** if it turns grey (inactive), and never touches it while green (active).
-  - **Waiting for Catch Recovery:** Inspects catch status; if fishing is stopped, automatically re-arms rod (Slot `1`) and casts water.
-
 - **💻 Compact Screen Calibration:**
   - Stepped shop scrolling (2 wheel ticks) to prevent buttons from clipping off the screen edge.
   - Dedicated 4-step buy sequence with calibrated button Y-ratios.
@@ -59,9 +55,6 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
   - **Configurable Cooldown:** Default set to **8m 01s** (`481` seconds in `config.ini`).
   - **Real-Time HUD Countdown:** Displays remaining time under `ABILITY`.
   - Manual instant trigger available anytime by clicking the timer directly.
-
-- **🛡️ 24/7 Overnight Fishing Watchdog:**
-  - Continuously re-equips fishing rod (Slot `1`) and clicks water every 20 seconds to guarantee uninterrupted overnight farming.
 
 - **🏬 Shop Mode Selector:**
   - Interactive widget button: toggle between `[ MODE : BOOST SHOP ]` and `[ MODE : SELENE SHOP ]`.
@@ -87,7 +80,6 @@ Optimized for **Laptops / Compact Screens** (2-tick stepped scroll, calibrated v
 
 - `[Auto_Rebirth]`: Enable/disable hourly rebirth (`EnableAutoRebirth = 1`, `RebirthIntervalMinutes = 60`).
 - `[Selene_Potions]`: Individual toggles for Luck 3, Heaven's Collide, Luck 2, and Food 1.
-- `[Fishing_Watchdog]`: Emergency Auto Fish click (`AutoFishFallback = 1`) and catch recovery.
 - `[Hallows_Eve]`: Enable/disable OCR, character slots (Event = `2`, Normal = `1`, Rod = `1`).
 - `[Rod_Ability]`: Enable/disable, ability key (`v`), cooldown (`481s`).
 - `[Selene_Settings]`: 30-minute cycle and duration settings.

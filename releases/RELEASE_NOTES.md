@@ -37,10 +37,6 @@ Before running the macro, ensure you have:
   4. `Food Potion Lvl. 1` (Row 2, Col 2 - Cash, scrolled)
 * **Zero Accidental Buys:** Completely skips ability cards (Astral Thoughts, Emptiness, Hell Beast) and other potions. Never clicks on Robux buttons.
 
-### 🎣 Smart Fishing Watchdog & Auto Fish Color Fallback
-* **Adaptive `[ Auto Fish ]` Detection:** Samples the pixel color of the in-game Auto Fish button (`X=0.664, Y=0.846`). Clicks it **only** if it turns grey (inactive), and leaves it untouched when green.
-* **Catch State Watchdog:** Inspects the `Waiting for Catch...` catch bar text via OCR. If fishing is interrupted (rod unequipped or character desynced), automatically presses `1` to re-equip the rod and casts into the water.
-
 ### 🛠️ Interactive Launcher & One-Click Setup
 * **Smart `START_MACRO.bat` Assistant:** If AutoHotkey v2 is not installed, the launcher now offers an interactive menu to install automatically via `winget` or open the official download page in one keypress.
 
