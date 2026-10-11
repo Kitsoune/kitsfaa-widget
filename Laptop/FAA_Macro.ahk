@@ -336,24 +336,36 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
         allText .= t " `n"
     lower := StrLower(allText)
 
-    ; 1) Event Title signatures (HALLOWS / EVE):
+    ; 1) Negative Filter / Anti-False Positive Guard:
+    ; Multiple Roblox events (Heaven's Collide, Starfall, etc.) share the "Held Characters" mechanic!
+    ; e.g. Heaven's Collide: "Falling Stars can turn Held Characters ANGELIC or GOLD!"
+    ; If signatures of other known events are present and 'hallow' is absent, reject immediately.
+    isOtherEvent := InStr(lower, "collide")
+                 || InStr(lower, "heaven")
+                 || InStr(lower, "angelic")
+                 || InStr(lower, "starfall")
+                 || InStr(lower, "thunderstorm")
+    if (isOtherEvent && !InStr(lower, "hallow"))
+        return {found: false, method: "Excluded (Other Event)", text: allText, hasTitle: false, hasDesc: false}
+
+    ; 2) Event Title signatures (Strictly HALLOWS EVE):
+    ; NEVER match 'eve' alone, as 'Event Duration' appears in every single event!
     hasTitle := InStr(lower, "hallow") 
-             || InStr(lower, "allow's") 
              || InStr(lower, "hallows") 
-             || RegExMatch(lower, "i)\b(hallow|hallows|eve)\b")
+             || (InStr(lower, "allow") && InStr(lower, "eve"))
 
-    ; 2) Exclusive Hallows Eve mechanics (from live game banner):
+    ; 3) Exclusive Hallows Eve mechanics (from live game banner):
     ; "Held Characters can be Turned into a DRACULA!"
-    ; STRICTLY EXCLUDES generic words like 'electric', 'sinister', or generic mutations to prevent false triggers on other events!
-    hasUniquePhrase := InStr(lower, "dracula")
-                    || InStr(lower, "turned into")
-                    || InStr(lower, "held character")
-                    || InStr(lower, "holding a clean")
-                    || (InStr(lower, "held") && InStr(lower, "turn"))
-                    || (InStr(lower, "demonic") && InStr(lower, "dracula"))
+    ; The only unique mutation of Hallows Eve is DRACULA (or Demonic + Dracula).
+    ; Generic words like 'held', 'turn', 'turned into' are SHARED across multiple events and must NEVER trigger on their own!
+    hasDracula := InStr(lower, "dracula")
+               || (InStr(lower, "demonic") && InStr(lower, "drac"))
 
-    isHallows := hasTitle || hasUniquePhrase
-    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasUniquePhrase}
+    ; Valid Hallows Eve requires either:
+    ; - The title explicitly containing HALLOW / HALLOWS / ALLOWS EVE, OR
+    ; - The description mentioning DRACULA mutation!
+    isHallows := hasTitle || hasDracula
+    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDracula}
 }
 
 CheckHallowsEveEvent() {
