@@ -57,5 +57,5 @@ Welcome to **Fish an Anime RNG (FAA) Macro v3.0**, powered by AutoHotkey v2 with
 ## 🚀 Quick Setup
 1. Download either `FAA-Macro-v3.0-Desktop.zip` or `FAA-Macro-v3.0-Laptop.zip`.
 2. Extract the archive into any folder.
-3. Launch `START_MACRO.bat` (or `LANCER_MACRO.bat`).
+3. Launch `START_MACRO.bat`.
 4. Focus Roblox and press **`F1`** or click **`▶ START`** on the HUD!
