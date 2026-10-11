@@ -1,4 +1,4 @@
-# Fish an Anime RNG - Macro & HUD Widget (Desktop Edition v3.2)
+# Fish an Anime RNG - Macro & HUD Widget (Desktop Edition v3.3)
 
 Automation suite for the Roblox game **Fish an Anime RNG**, built with AutoHotkey v2 and featuring a *Liquid Glass* HUD inspired by Nakano Nino.
 Optimized for **Desktop / Wide Screens** (standard 3-tick wheel scroll, Virtual Desktop switching).

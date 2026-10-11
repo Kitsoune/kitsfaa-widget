@@ -1,4 +1,4 @@
-# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.2)
+# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.3)
 
 This repository contains two optimized editions of the AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**:
 

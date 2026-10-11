@@ -98,7 +98,7 @@ CX := 55
 
 TitleCtrl := WidgetGui.Add("Text", "x" (CX+30) " y10 w220 h20 Center BackgroundTrans cE8B4E8", "✦ FISH AN ANIME RNG ✦")
 TitleCtrl.SetFont("s10 bold", "Segoe UI")
-VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Laptop v3.2")
+VerCtrl := WidgetGui.Add("Text", "x" (CX+30) " y26 w220 h14 Center BackgroundTrans cB090BC", "KITS Progress Inc. · Laptop v3.3")
 VerCtrl.SetFont("s7 bold", "Segoe UI")
 
 CloseCtrl := WidgetGui.Add("Text", "x" (CX+252) " y10 w20 h20 Center BackgroundTrans cC490C4", "✕")
