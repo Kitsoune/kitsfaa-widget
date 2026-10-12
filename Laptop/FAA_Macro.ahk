@@ -42,8 +42,9 @@ global ScrollTicks := 2                    ; 2 wheel ticks on Laptop (stepped sc
 
 ; Laptop specific shop Y-ratios
 global ShopCashRatioY := 0.4653
-global ShopGemsRatioY := 0.4340
-global ShopSpecialsRatioY := 0.6806
+global ShopGemsRatioY := 0.4730
+global ShopSpecialsRatioY := 0.5550
+
 
 ; Virtual desktop switching (Disabled by default on Laptop 24/7 foreground)
 global AutoSwitchDesktop := 0
@@ -984,15 +985,15 @@ DoAutoBuySequence() {
 
         if (Buy_Mutation && IsRunning && IsExecutingShop) {
             TxtStatus.Text := "Mutation..."
-            BuyCashButton(col1_CashX, s2_row1_Y)
+            BuyCashButton(col1_CashX, s2_row2_Y)
         }
         if (Buy_FastCatch && IsRunning && IsExecutingShop) {
             TxtStatus.Text := "Fast Catch..."
-            BuyCashButton(col2_CashX, s2_row1_Y)
+            BuyCashButton(col2_CashX, s2_row2_Y)
         }
         if (Buy_Luck && IsRunning && IsExecutingShop) {
             TxtStatus.Text := "Luck Lvl 1..."
-            BuyCashButton(col3_CashX, s2_row1_Y)
+            BuyCashButton(col3_CashX, s2_row2_Y)
         }
     }
 
@@ -1315,8 +1316,8 @@ LoadConfig() {
     ScrollTicks := ParseIniInt(IniRead(IniPath, "Shop_Settings", "ScrollWheelTicks", 2), 2)
 
     ShopCashRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopCashRatioY", 0.4653), 0.4653)
-    ShopGemsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopGemsRatioY", 0.4340), 0.4340)
-    ShopSpecialsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopSpecialsRatioY", 0.6806), 0.6806)
+    ShopGemsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopGemsRatioY", 0.4730), 0.4730)
+    ShopSpecialsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopSpecialsRatioY", 0.5550), 0.5550)
 
     AutoSwitchDesktop := ParseIniInt(IniRead(IniPath, "Virtual_Desktop", "AutoSwitchDesktop", 0), 0)
     DesktopStepsRight := ParseIniInt(IniRead(IniPath, "Virtual_Desktop", "DesktopStepsRight", 2), 2)
