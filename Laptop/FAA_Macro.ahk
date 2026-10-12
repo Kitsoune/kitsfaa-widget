@@ -43,7 +43,7 @@ global ScrollTicks := 2                    ; 2 wheel ticks on Laptop (stepped sc
 ; Laptop specific shop Y-ratios
 global ShopCashRatioY := 0.4653
 global ShopGemsRatioY := 0.4730
-global ShopSpecialsRatioY := 0.5550
+global ShopSpecialsRatioY := 0.4960
 
 
 ; Virtual desktop switching (Disabled by default on Laptop 24/7 foreground)
@@ -1317,7 +1317,7 @@ LoadConfig() {
 
     ShopCashRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopCashRatioY", 0.4653), 0.4653)
     ShopGemsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopGemsRatioY", 0.4730), 0.4730)
-    ShopSpecialsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopSpecialsRatioY", 0.5550), 0.5550)
+    ShopSpecialsRatioY := ParseIniFloat(IniRead(IniPath, "Shop_Settings", "ShopSpecialsRatioY", 0.4960), 0.4960)
 
     AutoSwitchDesktop := ParseIniInt(IniRead(IniPath, "Virtual_Desktop", "AutoSwitchDesktop", 0), 0)
     DesktopStepsRight := ParseIniInt(IniRead(IniPath, "Virtual_Desktop", "DesktopStepsRight", 2), 2)
