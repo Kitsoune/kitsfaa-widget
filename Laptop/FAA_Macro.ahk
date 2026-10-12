@@ -621,13 +621,22 @@ DoAutoRebirthSequence() {
     Click(gbX, gbY)
     Sleep(400)
 
-    ; Step 3: Close Rebirth modal via red [X] button (X=0.754, Y=0.174)
+    ; Step 3: Close Rebirth modal & dismiss Robux purchase prompt if not enough cash
+    ; NOTE: If player lacks cash, Roblox opens a "Buy Robux" prompt in the screen center.
+    ; (closeX, closeY) at (0.754, 0.174) is completely OUTSIDE the Robux modal (100% safe, never clicks "Acheter").
+    ; - 1st click: Hits the outside backdrop, safely dismissing the Robux prompt if present.
+    ; - 2nd click: Hits the red [X] button of the Rebirth menu behind it to close the menu.
+    ; - 3rd click: Extra safety click in case of lag/animation delay.
     closeX := Integer(cw * 0.754)
     closeY := Integer(ch * 0.174)
     MouseMove(closeX, closeY, 3)
-    Sleep(150)
-    Click(closeX, closeY)
-    Sleep(400)
+    Sleep(200)
+    Click(closeX, closeY)  ; Click 1: Dismisses Robux prompt if open, or closes Rebirth
+    Sleep(400)             ; Wait for Robux popup dismiss animation
+    Click(closeX, closeY)  ; Click 2: Closes Rebirth red [X] button
+    Sleep(300)
+    Click(closeX, closeY)  ; Click 3: Safety click against lag
+    Sleep(300)
 
     LastRebirthTick := A_TickCount
 
