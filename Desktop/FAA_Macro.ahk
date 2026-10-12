@@ -337,14 +337,15 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
     ; Random Events: Blizzard, Sweet Dreams, Solar, Lunar, Slime Rain, Thunder
     ; Rare & Server: Sub Zero, Sakura Season, Lucrative Realization, Complex Matrix, Toxic Wasteland, Forgotten Ruins, Sad Ending, Starfall
     ; Catch & Ritual: Heaven's Collide, Hell's Gates, Limerence Complexity, Broken Thoughts, Eclipse
-    ; Potion: Cyberspace, Dreamspace
+    ; Potion & Other: Cyberspace, Dreamspace, Blood Moon, Blood
     otherEvents := [
         "collide", "heaven", "angelic",
         "hell's gate", "hells gate", "hell's", "hells",
         "starfall", "sakura", "sub zero", "blizzard", "thunder",
         "sweet dream", "slime rain", "toxic waste", "forgotten ruin",
         "sad ending", "complex matrix", "cyberspace", "dreamspace",
-        "lucrative", "realization", "limerence", "broken thought", "eclipse"
+        "lucrative", "realization", "limerence", "broken thought", "eclipse",
+        "lunar", "solar", "blood moon", "blood", "radioactive", "foggy", "acid rain"
     ]
 
     matchedExclusion := ""
@@ -358,23 +359,20 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
         return {found: false, method: "Excluded (" matchedExclusion ")", text: allText, hasTitle: false, hasDesc: false}
 
     ; 2) Event Title signatures (Strictly HALLOWS EVE):
-    ; NEVER match 'eve' alone, as 'Event Duration' appears in every single event!
-    hasTitle := InStr(lower, "hallow") 
-             || InStr(lower, "hallows") 
-             || (InStr(lower, "allow") && InStr(lower, "eve"))
+    ; Must explicitly contain "hallow" (covers Hallows, Hallows Eve, Hallow's Eve, Halloween)
+    hasTitle := InStr(lower, "hallow")
 
     ; 3) Exclusive Hallows Eve mechanics (from live game banner):
     ; "Held Characters can be Turned into a DRACULA!"
-    ; The only unique mutation of Hallows Eve is DRACULA (or Demonic + Dracula).
-    ; Generic words like 'held', 'turn', 'turned into' are SHARED across multiple events and must NEVER trigger on their own!
-    hasDracula := InStr(lower, "dracula")
-               || (InStr(lower, "demonic") && InStr(lower, "drac"))
+    ; Prevents false positives from simple chat or player catch notifications:
+    ; DRACULA must be accompanied by the event banner mechanics ("turn", "held", or "character")!
+    hasDraculaMechanic := InStr(lower, "dracula") && (InStr(lower, "turn") || InStr(lower, "held") || InStr(lower, "character"))
 
     ; Valid Hallows Eve requires either:
-    ; - The title explicitly containing HALLOW / HALLOWS / ALLOWS EVE, OR
-    ; - The description mentioning DRACULA mutation!
-    isHallows := hasTitle || hasDracula
-    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDracula}
+    ; - The title explicitly containing HALLOW (Hallows, Hallows Eve, Halloween), OR
+    ; - The description mentioning DRACULA mutation combined with banner mechanics (turn / held characters)!
+    isHallows := hasTitle || hasDraculaMechanic
+    return {found: isHallows, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDraculaMechanic}
 }
 
 CheckHallowsEveEvent() {
@@ -412,9 +410,9 @@ CheckHallowsEveEvent() {
             if (IsRunning) {
                 ; Hold event character via Key 'é' (Slot 2) without interrupting ongoing fishing
                 ActivateRoblox()
-                Sleep(80)
+                Sleep(150)
                 PressHotbarSlot(EventCharSlot)
-                Sleep(100)
+                Sleep(150)
             }
         }
     } else {
@@ -427,13 +425,14 @@ CheckHallowsEveEvent() {
                 HallowsEveMissCount := 0
                 TxtHallowsEveStatus.Text := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
                 TxtHallowsEveStatus.SetFont("cB8A5C9")
+
                 if (IsRunning && wasActive) {
                     ; Release event character by re-pressing Key 'é' (Slot 2)
                     slotToUnequip := (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot
                     ActivateRoblox()
-                    Sleep(80)
+                    Sleep(150)
                     PressHotbarSlot(slotToUnequip)
-                    Sleep(100)
+                    Sleep(150)
                 }
             }
         }
@@ -516,9 +515,9 @@ PressHotbarSlot(slotNum) {
     ; Uses raw physical scancode to guarantee 100% compatibility on AZERTY (é, &, ", etc.) and QWERTY:
     ; Slot 1 = sc002 (& / 1), Slot 2 = sc003 (é / 2), Slot 3 = sc004 (" / 3)...
     sc := Format("sc{:03X}", slotNum + 1)
-    Send("{" sc " down}")
-    Sleep(80)
-    Send("{" sc " up}")
+    SendMode("Event")
+    SetKeyDelay(50, 70)
+    Send("{" sc "}")
 }
 
 StartFishingClick() {
