@@ -287,6 +287,7 @@ TimerSecondTick() {
         if ((nowTick - LastRebirthTick) >= (RebirthIntervalMinutes * 60000)) {
             LastRebirthTick := nowTick
             SetTimer(DoAutoRebirthSequence, -50)
+        }
     }
 }
 
