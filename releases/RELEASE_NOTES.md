@@ -1,4 +1,10 @@
-# ✦ Fish an Anime RNG - Release v4.1
+# ✦ Fish an Anime RNG - Release v4.2
+
+## 🌙 v4.2 - Safer Selene shop
+* Before every Selene purchase, the macro reads the card under the button. A character, an ability or an **OUT OF STOCK** card is never clicked.
+* When Selene adds a character in the first slot, every potion position is shifted by one slot automatically.
+* `macro.log` lists what was clicked, the stock before → after, warnings, and a summary per Selene visit.
+* Hallows Eve: no more false detection during Slime Rain (the Dracula description is checked first, other event names block a fuzzy "hallow" match). **Lucky River** added to the other events.
 
 ## 🎃 v4.1 - Hallows Eve fixes
 * The event timer ("Event Duration") is read by OCR: the event character is never put away before it runs out, even if the banner is briefly unreadable. The widget shows the time left.
@@ -7,7 +13,7 @@
 
 ## 📦 Download
 
-**[FAA-Macro-v4.1.zip](FAA-Macro-v4.1.zip)** - unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
+**[FAA-Macro-v4.2.zip](FAA-Macro-v4.2.zip)** - unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
 
 ## 🌟 New in v4.0
 

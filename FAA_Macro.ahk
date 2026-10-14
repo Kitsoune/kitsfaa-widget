@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.1"
+global AppVersion := "4.2"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -101,11 +101,13 @@ global BoostItems := [
     ShopItem("Boost.Luck", "Luck Potion Lvl 1", "Potions_Row3", "Buy_Luck_Lvl1")
 ]
 
+global SeleneSlots := Map("Selene.Luck3", 1, "Selene.Heavens", 5, "Selene.Luck2", 6, "Selene.Food1", 8)
+
 global SeleneItems := [
-    ShopItem("Selene.Luck3", "Luck Potion Lvl 3", "Selene_Potions", "Buy_Luck_Lvl3"),
-    ShopItem("Selene.Heavens", "Heaven's Collide Potion", "Selene_Potions", "Buy_HeavensCollide"),
-    ShopItem("Selene.Luck2", "Luck Potion Lvl 2", "Selene_Potions", "Buy_Luck_Lvl2"),
-    ShopItem("Selene.Food1", "Food Potion Lvl 1", "Selene_Potions", "Buy_Food_Lvl1")
+    ShopItem("Selene.Luck3", "Luck Potion Lvl 3", "Selene_Potions", "Buy_Luck_Lvl3", true),
+    ShopItem("Selene.Heavens", "Heaven's Collide Potion", "Selene_Potions", "Buy_HeavensCollide", true),
+    ShopItem("Selene.Luck2", "Luck Potion Lvl 2", "Selene_Potions", "Buy_Luck_Lvl2", true),
+    ShopItem("Selene.Food1", "Food Potion Lvl 1", "Selene_Potions", "Buy_Food_Lvl1", true)
 ]
 
 LoadConfig()
@@ -160,7 +162,7 @@ if (IniRead(IniPath, "Routine", "SetupShown", "0") = "0") {
     SetTimer(() => ShowSetupMenu(true), -700)
 }
 
-ShopItem(id, label, section, key) => {id: id, label: label, section: section, key: key, buy: 1}
+ShopItem(id, label, section, key, guard := false) => {id: id, label: label, section: section, key: key, buy: 1, guard: guard}
 
 RowY(i) => 72 + 26 * i
 
@@ -493,32 +495,36 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
                 allText .= r.Text " `n"
         }
     }
-    lower := StrLower(allText)
-    squashed := RegExReplace(RegExReplace(RegExReplace(lower, "[1i|!]", "l"), "0", "o"), "[^a-z]")
+    squashed := SquashOcr(allText)
 
-    hasTitle := InStr(squashed, "hallow")
     hasDraculaMechanic := (InStr(squashed, "dracul") || InStr(squashed, "racula"))
         && (InStr(squashed, "turn") || InStr(squashed, "held") || InStr(squashed, "character"))
-    if (hasTitle || hasDraculaMechanic)
-        return {found: true, method: "Multi-Pass OCR", text: allText, hasTitle: hasTitle, hasDesc: hasDraculaMechanic}
+    if hasDraculaMechanic
+        return {found: true, method: "OCR · Dracula description", text: allText, hasTitle: false, hasDesc: true}
 
     otherEvents := [
         "collide", "heaven", "angelic",
         "hell's gate", "hells gate", "hell's", "hells",
         "starfall", "sakura", "sub zero", "blizzard", "thunder",
-        "sweet dream", "slime rain", "toxic waste", "forgotten ruin",
+        "sweet dream", "slime rain", "slime shower", "toxic waste", "forgotten ruin",
         "sad ending", "complex matrix", "cyberspace", "dreamspace",
         "lucrative", "realization", "limerence", "broken thought", "eclipse",
-        "lunar", "solar", "blood moon", "blood", "radioactive", "foggy", "acid rain"
+        "lunar", "solar", "blood moon", "blood", "radioactive", "foggy", "acid rain",
+        "lucky river", "river"
     ]
     for ev in otherEvents {
-        if InStr(lower, ev)
+        if InStr(squashed, SquashOcr(ev))
             return {found: false, method: "Other event (" ev ")", text: allText, hasTitle: false, hasDesc: false}
     }
+
+    if InStr(squashed, "hallow")
+        return {found: true, method: "OCR · Hallows title", text: allText, hasTitle: true, hasDesc: false}
     return {found: false, method: "Multi-Pass OCR", text: allText, hasTitle: false, hasDesc: false}
 }
 
-EventRect(rc) => ({x: rc.x + Integer(rc.w * EventRatioX), y: rc.y + Integer(rc.h * EventRatioY), w: Integer(rc.w * EventRatioW), h: Integer(rc.h * EventRatioH)})
+SquashOcr(text) => RegExReplace(RegExReplace(RegExReplace(StrLower(text), "[1i|!]", "l"), "0", "o"), "[^a-z]")
+
+EventRect(rc) =>({x: rc.x + Integer(rc.w * EventRatioX), y: rc.y + Integer(rc.h * EventRatioY), w: Integer(rc.w * EventRatioW), h: Integer(rc.h * EventRatioH)})
 
 HallowsActiveText() => "🎃 ACTIVE" (HallowsLeftSeconds() ? " · " FormatMMSS(HallowsLeftSeconds()) : IsRunning ? " (Slot " EventCharSlot ")" : "")
 
@@ -577,7 +583,7 @@ CheckHallowsEveEvent() {
         if !IsHallowsEveActive {
             IsHallowsEveActive := true
             SetHallowsHud(true)
-            Log("Hallows Eve detected" (secs ? " (" FormatMMSS(secs) " left)" : ""))
+            Log("Hallows Eve detected via " det.method (secs ? " (" FormatMMSS(secs) " left)" : "") " | OCR: " SubStr(RegExReplace(det.text, "\s+", " "), 1, 300))
         }
         if IsRunning
             SetEventChar(true)
@@ -861,19 +867,34 @@ DoAutoBuySequence() {
             return
 
         scrolled := 0
+        summary := ""
+        shifted := false
+        if isSelene {
+            first := GetPoint("Selene.Luck3")
+            ScrollShop(rc, first.t)
+            scrolled := first.t
+            if (shifted := RegExMatch(CardText(rc, first), "i)exclusive|obtained"))
+                Log("Selene: character card in slot 1, every potion shifted by one slot")
+        }
         for it in (isSelene ? SeleneItems : BoostItems) {
             if !ActionAlive()
                 return
             if !it.buy
                 continue
-            p := GetPoint(it.id)
+            p := shifted ? ShiftedSelenePoint(it.id) : GetPoint(it.id)
             ScrollShop(rc, p.t - scrolled)
             scrolled := p.t
             TxtStatus.Text := it.label "..."
+            if it.guard {
+                summary .= it.label ": " GuardedBuy(rc, it, p) " · "
+                continue
+            }
             BuyButton(rc, p)
             Log("  bought " it.label " at " Round(p.x, 3) "," Round(p.y, 3) " (scroll " p.t ")")
         }
 
+        if (summary != "")
+            Log("Selene summary: " RTrim(summary, " ·"))
         if !ActionAlive()
             return
         TxtStatus.Text := "CLOSING SHOP..."
@@ -1124,8 +1145,9 @@ RecordShop(isSelene) {
             r := CapturePoint(name " · " i "/" items.Length "`n" it.label "`nAim at its BUY button (press ↓ to scroll if it is hidden), then press ENTER.")
             if Cancelled(r)
                 return false
-            if IsObject(r)
-                IniWrite(WizardTicks "," r.x "," r.y, IniPath, "Routine", it.id)
+            if !IsObject(r)
+                continue
+            IniWrite(WizardTicks "," r.x "," r.y, IniPath, "Routine", it.id)
         }
     } finally {
         WizardScrollEnabled := false
@@ -1181,6 +1203,56 @@ EditAbilityCooldown() {
         RestartRodCooldown()
     }
     ShowSetupMenu()
+}
+
+CardText(rc, pt) {
+    x := rc.x + Integer(rc.w * (pt.x - 0.045)), y := rc.y + Integer(rc.h * (pt.y - 0.19))
+    w := Integer(rc.w * 0.175), h := Integer(rc.h * 0.165)
+    for opts in [{scale: 1.0}, {scale: 1.0, grayscale: 1}] {
+        try result := OCR.FromRect(x, y, w, h, opts)
+        catch
+            continue
+        text := Trim(RegExReplace(result.Text, "\s+", " "))
+        if (text != "")
+            return text
+    }
+    return ""
+}
+
+ShiftedSelenePoint(id) {
+    target := SeleneSlots[id]
+    row := target // 3, col := Mod(target, 3)
+    h := GetPoint("Selene.Heavens"), l := GetPoint("Selene.Luck2")
+    colStep := (h.t = l.t && Abs(h.y - l.y) < 0.03) ? l.x - h.x : 0.1865
+    for refId, slot in SeleneSlots {
+        if ((slot - 1) // 3 = row) {
+            ref := GetPoint(refId)
+            return {t: ref.t, x: ref.x + (col - Mod(slot - 1, 3)) * colStep, y: ref.y}
+        }
+    }
+    return GetPoint(id)
+}
+
+StockText(card) =>RegExMatch(card, "i)[o0]ut\s*of\s*st[o0]ck") ? "OUT OF STOCK" : RegExMatch(card, "i)x\s?\S{1,3}\s?left", &m) ? m[0] : "stock ?"
+
+WrongCard(card) => RegExMatch(card, "i)exclusive|obtained|unlocks|abilit")
+
+GuardedBuy(rc, it, p) {
+    card := CardText(rc, p)
+    snippet := SubStr(card, 1, 90)
+    if WrongCard(card) {
+        Log("  ⚠ " it.label ": the card under the button is NOT this potion ('" snippet "'), layout shifted? nothing clicked")
+        return "skipped (wrong card)"
+    }
+    if (StockText(card) = "OUT OF STOCK") {
+        Log("  " it.label ": out of stock, nothing clicked")
+        return "0 (out of stock)"
+    }
+    BuyButton(rc, p)
+    Sleep(400)
+    after := StockText(CardText(rc, p))
+    Log("  " it.label ": clicked " ClicksPerButton "x · stock " StockText(card) " → " after " · card '" snippet "'")
+    return after = "OUT OF STOCK" ? "bought, now sold out" : "clicked, " after
 }
 
 RecordBoostShop() => RecordShop(false)
