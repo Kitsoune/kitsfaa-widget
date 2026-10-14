@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.0"
+global AppVersion := "4.1"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -65,6 +65,8 @@ global EventRatioY := 0.04
 global EventRatioW := 0.30
 global EventRatioH := 0.12
 global IsHallowsEveActive := false
+global EventCharOut := false
+global HallowsEndTick := 0
 global HallowsEveMissCount := 0
 global LastOcrCheckTick := 0
 
@@ -348,6 +350,9 @@ TimerSecondTick() {
     if EnableRodAbility
         UpdateRodAbility(idle, Mod(curSec, 2) = 0)
 
+    if (IsHallowsEveActive && HallowsEndTick)
+        SetHallowsHud(true)
+
     nowTick := A_TickCount
 
     if (EnableHallowsEve && !IsExecutingShop && nowTick - LastOcrCheckTick >= CheckIntervalSeconds * 1000) {
@@ -515,7 +520,7 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
 
 EventRect(rc) => ({x: rc.x + Integer(rc.w * EventRatioX), y: rc.y + Integer(rc.h * EventRatioY), w: Integer(rc.w * EventRatioW), h: Integer(rc.h * EventRatioH)})
 
-HallowsActiveText() => IsRunning ? "🎃 ACTIVE (Slot " EventCharSlot ")" : "🎃 ACTIVE"
+HallowsActiveText() => "🎃 ACTIVE" (HallowsLeftSeconds() ? " · " FormatMMSS(HallowsLeftSeconds()) : IsRunning ? " (Slot " EventCharSlot ")" : "")
 
 HallowsInactiveText() => (NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? "● INACTIVE (Slot " NormalCharSlot ")" : "● INACTIVE"
 
@@ -524,8 +529,35 @@ SetHallowsHud(active) {
     SetFontColor(TxtHallowsEveStatus, active ? "FF9D00" : "BFAACF")
 }
 
+ParseEventDuration(text) {
+    best := 0
+    pos := 1
+    lower := StrLower(text)
+    while (pos := RegExMatch(lower, "dura\w*\W{0,3}(\d{1,2})\s*[:.;]\s*(\d{2})", &m, pos)) {
+        secs := Integer(m[1]) * 60 + Integer(m[2])
+        if (Integer(m[2]) < 60 && secs > 0 && secs <= 900)
+            best := Max(best, secs)
+        pos += m.Len
+    }
+    return best
+}
+
+SetEventChar(wantOut) {
+    global EventCharOut
+    if (wantOut = EventCharOut)
+        return
+    ActivateRoblox()
+    Sleep(150)
+    PressHotbarSlot(wantOut || NormalCharSlot <= 0 || NormalCharSlot = EventCharSlot ? EventCharSlot : NormalCharSlot)
+    Sleep(150)
+    EventCharOut := wantOut
+    Log(wantOut ? "Hallows Eve: event character OUT" : "Hallows Eve: event character AWAY")
+}
+
+HallowsLeftSeconds() => HallowsEndTick ? Max(0, (HallowsEndTick - A_TickCount) // 1000) : 0
+
 CheckHallowsEveEvent() {
-    global IsHallowsEveActive, HallowsEveMissCount
+    global IsHallowsEveActive, HallowsEveMissCount, HallowsEndTick
     if (!EnableHallowsEve || IsExecutingShop)
         return
 
@@ -540,33 +572,30 @@ CheckHallowsEveEvent() {
 
     if det.found {
         HallowsEveMissCount := 0
+        if (secs := ParseEventDuration(det.text))
+            HallowsEndTick := A_TickCount + (secs + 3) * 1000
         if !IsHallowsEveActive {
             IsHallowsEveActive := true
             SetHallowsHud(true)
-            if IsRunning {
-                ActivateRoblox()
-                Sleep(150)
-                PressHotbarSlot(EventCharSlot)
-                Sleep(150)
-            }
+            Log("Hallows Eve detected" (secs ? " (" FormatMMSS(secs) " left)" : ""))
         }
+        if IsRunning
+            SetEventChar(true)
         return
     }
 
-    if !IsHallowsEveActive
+    if (!IsHallowsEveActive || HallowsLeftSeconds() > 0)
         return
     HallowsEveMissCount++
-    if (HallowsEveMissCount < 2)
+    if (HallowsEveMissCount < (HallowsEndTick ? 1 : 3))
         return
     IsHallowsEveActive := false
     HallowsEveMissCount := 0
+    HallowsEndTick := 0
     SetHallowsHud(false)
-    if IsRunning {
-        ActivateRoblox()
-        Sleep(150)
-        PressHotbarSlot((NormalCharSlot > 0 && NormalCharSlot != EventCharSlot) ? NormalCharSlot : EventCharSlot)
-        Sleep(150)
-    }
+    Log("Hallows Eve ended")
+    if IsRunning
+        SetEventChar(false)
 }
 
 ShowOcrResult(title, header, rect, det) {
@@ -888,11 +917,8 @@ ToggleMacroState() {
         TriggerRodAbility()
         RestartRodCooldown()
     }
-    if IsHallowsEveActive {
-        SetHallowsHud(true)
-        PressHotbarSlot(EventCharSlot)
-        Sleep(100)
-    }
+    SetHallowsHud(IsHallowsEveActive)
+    SetEventChar(IsHallowsEveActive)
     StartFishingClick()
     LeaveRoblox(didSwitch)
 }

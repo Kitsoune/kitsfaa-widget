@@ -1,12 +1,17 @@
-# ✦ Fish an Anime RNG - Release v4.0
+# ✦ Fish an Anime RNG - Release v4.1
 
-One single version for every screen. The separate Desktop and Laptop editions are gone.
+## 🎃 v4.1 - Hallows Eve fixes
+* The event timer ("Event Duration") is read by OCR: the event character is never put away before it runs out, even if the banner is briefly unreadable. The widget shows the time left.
+* The macro remembers whether the event character is out and only presses é when needed (no more character left out after the event, or put away when pressing START mid-event).
+* Every out / away move is written to `macro.log`.
 
 ## 📦 Download
 
-**[FAA-Macro-v4.0.zip](FAA-Macro-v4.0.zip)** - unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
+**[FAA-Macro-v4.1.zip](FAA-Macro-v4.1.zip)** - unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
 
-## 🌟 What's new
+## 🌟 New in v4.0
+
+One single version for every screen. The separate Desktop and Laptop editions are gone.
 
 ### 🎯 Record your own routine (works on any screen)
 * A **Setup** window opens on first launch (and any time with **⚙ SETUP** / **F4**).
