@@ -1,96 +1,50 @@
-# Fish an Anime RNG (FAA) - Macro & HUD Widget (Nino Edition v3.3)
+# Fish an Anime RNG (FAA) - Macro & Nino HUD Widget v4.0
 
-This repository contains two optimized editions of the AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**:
+AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**. A single version runs on any screen (desktop, laptop, any resolution): you record your own buttons once, in game.
 
----
+![Widget](assets/widget_full_preview.png)
 
-## 📁 Available Releases
+## 🚀 Quick start
 
-### 1. **[Desktop/](Desktop/)**
-* Tailored for high-resolution wide desktop screens.
-* 3-tick wheel scroll for standard full-height shop interface.
-* Automatic Windows Virtual Desktop switching (Desktop 1 <-> Desktop 3).
+1. Double-click `START_MACRO.bat` (it installs AutoHotkey v2 for you if it is missing).
+2. On first launch the **Setup** window opens. Click **▶ Record everything** and follow the instructions shown in the top-left corner of Roblox:
+   * aim at the requested button with your mouse, then press **ENTER** (nothing gets clicked while you aim),
+   * **↓ / ↑** scroll the shop (the macro scrolls exactly the same way when farming),
+   * **BACKSPACE** skips an item, **ESC** cancels.
+3. Press **F1** (or click **▶ START**).
 
-### 2. **[Laptop/](Laptop/)**
-* Tailored for compact laptop screens running **24/7 dedicated to Roblox**.
-* 2-tick stepped wheel scroll to prevent button clipping.
-* Adaptive vertical Y-ratios for Cash, Gems, and Special potions.
-* Virtual desktop switching disabled by default (`AutoSwitchDesktop = 0`, Roblox foreground 24/7).
+Each part can be re-recorded at any time with **⚙ SETUP** or **F4**.
 
----
+## 🌟 Features
 
-## 📋 Prerequisites & Requirements
+* **🛒 Boost shop & 🌙 Selene's shop**: buys the potions you choose, right after each restock (:00, :05… / Selene every 30 min). If a timer tick is missed, the purchase still triggers during the next seconds of the window.
+* **🟢 Fishing watchdog**: every 5 s it checks the fishing bar. If the character stopped fishing (God / Omniscient catch…), it clicks the green **Click to Fish!** button (only when its recorded green colour is really there, because the grey **Fishing.** button that stops fishing sits at the same spot). If Auto Fish turned grey, it turns it back on. Nothing is clicked after a shop or a rebirth: the character keeps fishing while a shop is open.
+* **♻ Robux-safe auto-rebirth**: every 60 min or on **F9**, only ever clicks the green cash button.
+* **🎃 Hallows Eve OCR**: detects the event banner and holds the event character (slot 2).
+* **⚡ Rod ability**: presses **V** every 8 min 01 s.
+* **🦋 Nino HUD**: draggable widget (its position is remembered). It becomes click-through while the macro clicks, so it never hides a game button.
 
-- **Windows 10 / 11** (64-bit recommended)
-- **AutoHotkey v2** (v2.0 or newer):
-  - **Automated setup:** Double-clicking `START_MACRO.bat` detects whether AutoHotkey v2 is installed. If not, it launches an assisted installer via `winget` or directs you to the official download page.
-  - **Manual command:** Run in PowerShell or CMD:
-    ```cmd
-    winget install AutoHotkey.AutoHotkey
-    ```
-- **Roblox Client** (Windowed or Fullscreen)
+## ⌨️ Hotkeys
 
----
+| Key | Action |
+| :--- | :--- |
+| **F1** | Start / Pause |
+| **F2** | Quit |
+| **F3** | Shop clock offset (seconds) |
+| **F4** | Setup window |
+| **F5** | Run the shop now (test) |
+| **F6** | Test the Hallows Eve OCR |
+| **F7** | Draw the event banner zone |
+| **F8** | Re-record the water spot |
+| **F9** | Rebirth now |
 
-## 🌟 Key Features
+## ⚙️ Configuration
 
-* **✨ 100% Robux-Safe Auto-Rebirth:**
-  * Fully automated rebirth routine triggered periodically (default: every 60 min) or manually via **`F9`**.
-  * Opens the rebirth modal, strictly targets the **green Cash button**, and **never** clicks any Robux button.
-  * Closes the window cleanly and resumes fishing immediately.
-* **🌙 Selene's Store Selective Auto-Buy:**
-  * When Selene arrives (spawn every 30 mins) and shop mode is set to Selene, automatically buys **only** the 4 selected items:
-    * `Luck Potion Lvl. 3` (Gems)
-    * `Heaven's Collide Potion` (Gems)
-    * `Luck Potion Lvl. 2` (Cash)
-    * `Food Potion Lvl. 1` (Cash)
-* **🎃 Hallows Eve OCR Detection (Native `Windows.Media.Ocr`):**
-  * Automatic banner text detection without heavy external dependencies.
-  * Multi-pass high-contrast binarization and automatic top margin expansion (+35%) to capture stylized event titles.
-  * Auto-equips event character (Slot `2`) during Hallows Eve.
-  * Automatically switches back to normal character state outside event.
-  * Calibrate event bounding box with sleek click & drag using **`F7`**; test with **`F6`**.
-* **🌙 Fixed 30-Minute Selene Timer:**
-  * Synchronized with the fixed 30-minute cycle (`:00` and `:30`).
-  * Live status countdown: `ACTIVE 05:00` / `AWAY 25:00`.
-* **⚡ Rod Ability Auto-Trigger:**
-  * Auto-triggers rod ability (Key **`V`**) on startup and after cooldown (default `481s` = 8m 01s).
-  * Real-time countdown on HUD with click-to-trigger support.
-* **🏬 Shop Mode Switcher:**
-  * Toggle between `[ MODE : BOOST SHOP ]` and `[ MODE : SELENE SHOP ]` directly on the widget.
-* **🦋 Nakano Nino Liquid Glass HUD:**
-  * Draggable transparent overlay with butterfly pins, real-time counters, and controls.
+`config.ini` is created from `config.example.ini` on first launch. Recorded positions go into its `[Routine]` section (ratios of the Roblox window, so they survive window resizing). Set potions to `1` (buy) or `0` (skip).
 
----
-
-## ⌨️ Global Hotkeys
-
-| Hotkey | Action | Description |
-| :--- | :--- | :--- |
-| **`F1`** | **Start / Pause** | Toggle macro execution (or click `▶ START`). |
-| **`F2`** | **Exit** | Immediately closes macro and widget. |
-| **`F3`** | **Server Offset** | Adjust shop clock offset in seconds. |
-| **`F5`** | **Test Shop** | Run the complete shop purchasing routine. |
-| **`F6`** | **Test OCR** | Display current text recognized by OCR in event box. |
-| **`F7`** | **Calibrate Event Box** | Click & drag rectangle to set event bounding box. |
-| **`F8`** | **Calibrate Water** | **1 click** on water spot to set fishing target coordinates. |
-| **`F9`** | **Auto-Rebirth** | Trigger 100% Robux-safe Rebirth sequence manually. |
-
----
-
-## 🚀 How to Run
-
-1. Open your machine folder:
-   * **Desktop:** run `Desktop\START_MACRO.bat`
-   * **Laptop:** run `Laptop\START_MACRO.bat`
-2. Roblox will be focused, the HUD widget appears in top-right corner, and farming begins!
-
-
----
+To regenerate the widget artwork: `python generate_assets.py` (Pillow + NumPy).
 
 ## 📜 Credits & License
 
-* **Developer:** **Kitsoune** (Roblox: `Kitsouwune`)
-* **Organization:** **KITS Progress Inc.**
-* **License:** This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute with proper attribution.
-
+* **Developer:** Kitsoune (Roblox: `Kitsouwune`) · **KITS Progress Inc.**
+* [MIT License](LICENSE)
