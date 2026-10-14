@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.2"
+global AppVersion := "4.3"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -336,7 +336,7 @@ TimerSecondTick() {
         if (idle && ShopMode = "Selene") {
             for i, at in SeleneBuyAtSeconds {
                 key := selCycle * 10 + i
-                if (LastSeleneCycle < key && selPos >= at && selPos < selDur - 20) {
+                if ((LastSeleneCycle // 10 != selCycle || LastSeleneCycle < key) && selPos >= at && selPos < selDur - 20) {
                     LastSeleneCycle := key
                     Log("Selene trigger #" i " (" FormatMMSS(selPos) " after arrival)")
                     SetTimer(DoAutoBuySequence, -50)
