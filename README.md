@@ -1,8 +1,10 @@
-# Fish an Anime RNG (FAA) Macro & Nino HUD Widget v4.3
+# Fish an Anime RNG (FAA) Macro & HUD Widget v4.4
 
 AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**. A single version runs on any screen (desktop, laptop, any resolution): you record your own buttons once, in game.
 
-![Widget](assets/widget_full_preview.png)
+| Nino Nakano | Celestia Ludenberg | Tokyo Ghoul · Kaneki |
+| :---: | :---: | :---: |
+| ![Nino](assets/themes/nino/widget_full_preview.png) | ![Celestia](assets/themes/celestia/widget_full_preview.png) | ![Kaneki](assets/themes/kaneki/widget_full_preview.png) |
 
 ## 🚀 Quick start
 
@@ -22,7 +24,8 @@ Each part can be re-recorded at any time with **⚙ SETUP** or **F4**.
 * **♻ Robux-safe auto-rebirth**: every 60 min or on **F9**, only ever clicks the green cash button.
 * **🎃 Hallows Eve OCR**: detects the event banner and holds the event character (slot 2).
 * **⚡ Rod ability**: presses **V** every 8 min 01 s.
-* **🦋 Nino HUD**: draggable widget (its position is remembered). It becomes click-through while the macro clicks, so it never hides a game button.
+* **🎨 Themed HUD**: draggable widget (its position is remembered) with 3 themes: Nino Nakano, Celestia Ludenberg and Tokyo Ghoul · Kaneki. Pick one in **⚙ SETUP → 🎨 Widget theme**. It becomes click-through while the macro clicks, so it never hides a game button.
+* **🔔 Update check**: on launch, the macro checks GitHub for a newer release and offers to download and install it (your `config.ini` is kept).
 
 ## ⌨️ Hotkeys
 
@@ -41,8 +44,6 @@ Each part can be re-recorded at any time with **⚙ SETUP** or **F4**.
 ## ⚙️ Configuration
 
 `config.ini` is created from `config.example.ini` on first launch. Recorded positions go into its `[Routine]` section (ratios of the Roblox window, so they survive window resizing). Set potions to `1` (buy) or `0` (skip).
-
-To regenerate the widget artwork: `python generate_assets.py` (Pillow + NumPy).
 
 ## 📜 Credits & License
 

@@ -1,4 +1,9 @@
-# ✦ Fish an Anime RNG · Release v4.3
+# ✦ Fish an Anime RNG · Release v4.4
+
+## 🎨 v4.4: Themes, update check, safer shop opening
+* **Widget themes**: Nino Nakano (default), **Celestia Ludenberg** (jet-black twin drills, white ribbons, lace headdress, card suits) and **Tokyo Ghoul · Kaneki** (his white hair, eyepatch and kakugan faded into the header, red kagune, spider lilies growing from the bottom, checkerboard floor). Pick one in **⚙ SETUP → 🎨 Widget theme**, the widget restarts with it.
+* **Update check**: on launch, the macro checks GitHub for a newer release. It offers to download and install it, keeps your `config.ini` and restarts.
+* **Shop opening**: the macro no longer clicks inside the shop after opening it (that click could land on a card and open a Robux purchase window, mostly on Luck Potion Lvl 3). It only hovers the shop to scroll it.
 
 ## 🌙 v4.3: Selene after midnight
 * Selene's shop is opened again automatically after midnight. Before, the macro skipped every Selene visit after 00:00 until it was restarted (F5 still worked).
@@ -16,7 +21,7 @@
 
 ## 📦 Download
 
-**[FAA-Macro-v4.3.zip](FAA-Macro-v4.3.zip)**: unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
+**[FAA-Macro-v4.4.zip](FAA-Macro-v4.4.zip)**: unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed).
 
 ## 🌟 New in v4.0
 

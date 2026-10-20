@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.3"
+global AppVersion := "4.4"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -110,6 +110,23 @@ global SeleneItems := [
     ShopItem("Selene.Food1", "Food Potion Lvl 1", "Selene_Potions", "Buy_Food_Lvl1", true)
 ]
 
+global UpdateRepo := "Kitsoune/kitsfaa-widget"
+global UpdateRequest := ""
+global ThemeId := "nino"
+global Themes := Map(
+    "nino", {name: "Nino Nakano", colors: Map()},
+    "celestia", {name: "Celestia Ludenberg", colors: Map(
+        "F7D4E8", "FFFFFF", "A88BB5", "8E8282", "C9A0C9", "C8BEBE", "BFAACF", "D9CFCF",
+        "7EE8C8", "F2F2F2", "F49AC1", "FF4545", "C9A0FF", "B39A9A", "FFD166", "E3B65C",
+        "FF9D00", "FF4545", "C490C4", "9A8C8C", "6E5A7A", "5C4E4E", "8C7799", "7D6E6E",
+        "160F1E", "120A0B", "2A1D36", "2A1415", "B0569A", "BA0000", "F2E6F7", "F2EAEA")},
+    "kaneki", {name: "Tokyo Ghoul · Kaneki", colors: Map(
+        "F7D4E8", "FFFEFE", "A88BB5", "B4B4B4", "C9A0C9", "BDBDBD", "BFAACF", "D4D4D4",
+        "7EE8C8", "FFFEFE", "F49AC1", "FC2A2A", "C9A0FF", "A6A6A6", "FFD166", "FF7070",
+        "FF9D00", "FC2A2A", "C490C4", "8C8C8C", "6E5A7A", "4D4D4D", "8C7799", "707070",
+        "160F1E", "0C0C0C", "2A1D36", "1C1C1C", "B0569A", "C80000", "F2E6F7", "F0F0F0")}
+)
+
 LoadConfig()
 
 global WidgetGui := Gui("-Caption +AlwaysOnTop +ToolWindow -DPIScale", "Fish an Anime RNG · KITS Progress Inc.")
@@ -117,8 +134,8 @@ WidgetGui.BackColor := "0x010101"
 WidgetGui.MarginX := 0
 WidgetGui.MarginY := 0
 
-if FileExist(A_ScriptDir "\assets\widget_full.bmp")
-    WidgetGui.Add("Picture", "x0 y0 w452 h326", A_ScriptDir "\assets\widget_full.bmp")
+if FileExist(ThemeImage())
+    WidgetGui.Add("Picture", "x0 y0 w452 h326", ThemeImage())
 
 AddText("x126 y21 w200 h20 Center", "FISH AN ANIME RNG", "F7D4E8", "s10 bold")
 AddText("x126 y41 w200 h14 Center", "KITS Progress Inc. · v" AppVersion, "A88BB5", "s7")
@@ -156,6 +173,7 @@ OnExit(SaveWidgetPos)
 WidgetGui.Show(InitialWidgetPos() " w452 h326 NoActivate")
 WinSetTransColor("010101", WidgetGui)
 SetTimer(TimerSecondTick, 1000)
+SetTimer(CheckForUpdate, -3000)
 
 if (IniRead(IniPath, "Routine", "SetupShown", "0") = "0") {
     IniWrite(1, IniPath, "Routine", "SetupShown")
@@ -167,7 +185,7 @@ ShopItem(id, label, section, key, guard := false) => {id: id, label: label, sect
 RowY(i) => 72 + 26 * i
 
 AddText(opts, text, color, font := "s8 bold", face := "Segoe UI") {
-    ctrl := WidgetGui.Add("Text", opts " BackgroundTrans c" color, text)
+    ctrl := WidgetGui.Add("Text", opts " BackgroundTrans c" Tc(color), text)
     ctrl.SetFont(font, face)
     return ctrl
 }
@@ -176,7 +194,112 @@ AddRowValue(row, text, color, font := "s9 bold", face := "Consolas") => AddText(
 
 FormatMMSS(sec) => Format("{:02d}:{:02d}", sec // 60, Mod(sec, 60))
 
-SetFontColor(ctrl, color, weight := "bold") => ctrl.SetFont("c" color " " weight)
+SetFontColor(ctrl, color, weight := "bold") => ctrl.SetFont("c" Tc(color) " " weight)
+
+Tc(color) => Themes[ThemeId].colors.Has(color) ? Themes[ThemeId].colors[color] : color
+
+ThemeImage() => A_ScriptDir "\assets\themes\" ThemeId "\widget_full.bmp"
+
+ShowThemeMenu() {
+    m := Menu()
+    for id, theme in Themes {
+        m.Add(theme.name, ApplyTheme.Bind(id))
+        if (id = ThemeId)
+            m.Check(theme.name)
+    }
+    m.Show()
+}
+
+ApplyTheme(id, *) {
+    if (id = ThemeId || IsExecutingShop)
+        return
+    IniWrite(id, IniPath, "Widget", "Theme")
+    Reload()
+}
+
+CheckForUpdate() {
+    global UpdateRequest
+    try {
+        UpdateRequest := ComObject("WinHttp.WinHttpRequest.5.1")
+        UpdateRequest.Open("GET", "https://api.github.com/repos/" UpdateRepo "/releases/latest", true)
+        UpdateRequest.SetRequestHeader("User-Agent", "FAA-Macro")
+        UpdateRequest.Send()
+        SetTimer(PollUpdateCheck, 500)
+    }
+}
+
+PollUpdateCheck() {
+    static waited := 0
+    try done := UpdateRequest.WaitForResponse(0)
+    catch {
+        SetTimer(PollUpdateCheck, 0)
+        return
+    }
+    if !done {
+        if ((waited += 500) >= 15000)
+            SetTimer(PollUpdateCheck, 0)
+        return
+    }
+    SetTimer(PollUpdateCheck, 0)
+    try {
+        if (UpdateRequest.Status != 200)
+            return
+        body := UpdateRequest.ResponseText
+    } catch
+        return
+    if (RegExMatch(body, '"tag_name"\s*:\s*"v?([\d.]+)"', &m) && IsNewerVersion(m[1], AppVersion))
+        OfferUpdate(m[1], body)
+}
+
+IsNewerVersion(remote, current) {
+    r := StrSplit(remote, "."), c := StrSplit(current, ".")
+    Loop Max(r.Length, c.Length) {
+        a := A_Index <= r.Length && IsInteger(r[A_Index]) ? Integer(r[A_Index]) : 0
+        b := A_Index <= c.Length && IsInteger(c[A_Index]) ? Integer(c[A_Index]) : 0
+        if (a != b)
+            return a > b
+    }
+    return false
+}
+
+OfferUpdate(version, body) {
+    Log("Update available: v" version)
+    intro := "FAA Macro v" version " is available (you have v" AppVersion ").`n`n"
+    if DirExist(A_ScriptDir "\.git") {
+        if (MsgBox(intro "This folder is a git clone, so it is not replaced. Open the release page?", "FAA Update", "YesNo Iconi") = "Yes")
+            Run("https://github.com/" UpdateRepo "/releases/latest")
+        return
+    }
+    if (MsgBox(intro "Download and install it now?`nYour config.ini and recorded routine are kept, then the macro restarts.", "FAA Update", "YesNo Iconi") != "Yes")
+        return
+    url := RegExMatch(body, '"browser_download_url"\s*:\s*"([^"]+\.zip)"', &z) ? z[1] : "https://github.com/" UpdateRepo "/raw/v" version "/releases/FAA-Macro-v" version ".zip"
+    InstallUpdate(version, url)
+}
+
+InstallUpdate(version, url) {
+    work := A_Temp "\faa-update"
+    try {
+        if DirExist(work)
+            DirDelete(work, true)
+        DirCreate(work)
+        Download(url, work "\update.zip")
+        RunWait("powershell -NoProfile -Command `"Expand-Archive -LiteralPath '" work "\update.zip' -DestinationPath '" work "\files' -Force`"", , "Hide")
+        src := work "\files"
+        Loop Files src "\*", "D"
+            if FileExist(A_LoopFileFullPath "\FAA_Macro.ahk")
+                src := A_LoopFileFullPath
+        if !FileExist(src "\FAA_Macro.ahk")
+            throw Error("FAA_Macro.ahk is missing from the downloaded zip")
+        DirCopy(src, A_ScriptDir, 1)
+    } catch as e {
+        Log("Update failed: " e.Message)
+        MsgBox("The update could not be installed:`n" e.Message "`n`nThe release page opens so you can download it by hand.", "FAA Update", "Icon!")
+        Run("https://github.com/" UpdateRepo "/releases/latest")
+        return
+    }
+    Log("Updated to v" version)
+    Reload()
+}
 
 SetStatus(text, color) {
     TxtStatus.Text := text
@@ -814,7 +937,7 @@ OpenShop(rc) {
         return false
     }
     Sleep(800)
-    ClickAt(rc, 0.50, 0.38)
+    MoveTo(rc, 0.50, 0.38)
     Sleep(150)
     Loop 15 {
         Send("{WheelUp}")
@@ -1322,12 +1445,12 @@ ShowSetupMenu(welcome := false) {
         SetupGui.Destroy()
 
     SetupGui := Gui("+AlwaysOnTop +ToolWindow -DPIScale", "FAA Setup")
-    SetupGui.BackColor := "160F1E"
+    SetupGui.BackColor := Tc("160F1E")
     SetupGui.MarginX := 18
     SetupGui.MarginY := 16
-    SetupGui.SetFont("s12 bold cF7D4E8", "Segoe UI")
+    SetupGui.SetFont("s12 bold c" Tc("F7D4E8"), "Segoe UI")
     SetupGui.Add("Text", "w320", welcome ? "✦ Welcome!" : "✦ Setup your routine")
-    SetupGui.SetFont("s9 norm cBFAACF")
+    SetupGui.SetFont("s9 norm c" Tc("BFAACF"))
     SetupGui.Add("Text", "w320 y+6", "Record your own buttons once: the macro then works on any screen. Each part can be redone at any time. Items you skip keep their default position.")
 
     rows := [
@@ -1339,17 +1462,18 @@ ShowSetupMenu(welcome := false) {
         ["🌙   Selene's shop", IsRecorded("Routine", "Selene.Close"), RecordSeleneShop],
         ["♻   Rebirth", IsRecorded("Routine", "Rebirth.Confirm"), RecordRebirth]
     ]
-    SetupGui.SetFont("s10 norm cF2E6F7")
+    SetupGui.SetFont("s10 norm c" Tc("F2E6F7"))
     for row in rows {
-        btn := SetupGui.Add("Text", "w320 h32 y+8 0x200 Background2A1D36", "   " row[1] (row[2] ? "    ✓" : "    · default"))
+        btn := SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   " row[1] (row[2] ? "    ✓" : "    · default"))
         btn.OnEvent("Click", SetupHandler(row[3]))
     }
-    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background2A1D36", "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎").OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
-    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background2A1D36", "   🎃   Hallows Eve banner (drag a box)").OnEvent("Click", (*) => (SetupGui.Hide(), CalibrateEventArea()))
+    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎").OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
+    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎃   Hallows Eve banner (drag a box)").OnEvent("Click", (*) => (SetupGui.Hide(), CalibrateEventArea()))
+    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎨   Widget theme    " Themes[ThemeId].name "  ▸").OnEvent("Click", (*) => ShowThemeMenu())
 
     SetupGui.SetFont("s10 bold cFFFFFF")
-    SetupGui.Add("Text", "w320 h36 y+14 Center 0x200 BackgroundB0569A", "▶  Record everything").OnEvent("Click", SetupHandler(RecordWater, RecordAutoFish, RecordClickToFish, RecordBoostShop, RecordSeleneShop, RecordRebirth))
-    SetupGui.SetFont("s9 norm c8C7799")
+    SetupGui.Add("Text", "w320 h36 y+14 Center 0x200 Background" Tc("B0569A"), "▶  Record everything").OnEvent("Click", SetupHandler(RecordWater, RecordAutoFish, RecordClickToFish, RecordBoostShop, RecordSeleneShop, RecordRebirth))
+    SetupGui.SetFont("s9 norm c" Tc("8C7799"))
     SetupGui.Add("Text", "w320 h26 y+8 Center 0x200", "Close").OnEvent("Click", (*) => SetupGui.Hide())
     SetupGui.Show("AutoSize Center")
 }
@@ -1426,6 +1550,9 @@ LoadConfig() {
     if !FileExist(IniPath)
         return
 
+    ThemeId := IniRead(IniPath, "Widget", "Theme", "nino")
+    if !Themes.Has(ThemeId)
+        ThemeId := "nino"
     for it in BoostItems
         it.buy := IniInt(it.section, it.key, 1)
     for it in SeleneItems
