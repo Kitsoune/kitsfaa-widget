@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.5"
+global AppVersion := "4.6"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -81,7 +81,7 @@ global SetupGui := ""
 global OptionsGui := ""
 global DisclaimerText := "FAA Macro is a free, unofficial, fan-made tool, provided as is, without any warranty.`n`n"
     . "It clicks and buys in the game for you. A game update, lag, a changed shop layout or a bug can make it click the wrong button, buy the wrong item, spend your in-game currency or open a Robux purchase window.`n`n"
-    . "By using the widget and the macro, you accept to do so at your own risk. The developer is not responsible for any unwanted purchase, any loss of items or currency, or any action taken against your account. Using macros may go against Roblox or game rules."
+    . "By using the widget and the macro, you accept to do so at your own risk. The developer is not responsible for any unwanted purchase, any loss of items or currency, or any action taken against your account."
 
 global DefaultPoints := Map(
     "Boost.Cash1", "0,0.2744,0.4653", "Boost.Cash2", "0,0.4541,0.4653", "Boost.Cash3", "0,0.6328,0.4653",
@@ -1529,36 +1529,42 @@ RunSetup(steps*) {
 
 SetupHandler(steps*) => (*) => RunSetup(steps*)
 
-ShowSetupMenu(welcome := false) {
-    global SetupGui
-    if IsObject(SetupGui)
-        SetupGui.Destroy()
+SetupRows() => [
+    ["🎣   Water spot", IsRecorded("Fishing_Settings", "WaterRatioX"), RecordWater],
+    ["🟩   Click to Fish button", IsRecorded("Routine", "ClickToFish"), RecordClickToFish],
+    ["🟢   Auto Fish button", IsRecorded("Routine", "AutoFish"), RecordAutoFish],
+    ["⚡   Ability button (ready colour)", IsRecorded("Routine", "AbilityButton"), RecordAbilityButton],
+    ["🧛   Event character slot (Hallows Eve)", IsRecorded("Routine", "EventSlot"), RecordEventSlot],
+    ["🛒   Boost shop", IsRecorded("Routine", "Boost.Close"), RecordBoostShop],
+    ["🌙   Selene's shop", IsRecorded("Routine", "Selene.Close"), RecordSeleneShop],
+    ["♻   Rebirth", IsRecorded("Routine", "Rebirth.Confirm"), RecordRebirth]
+]
 
+ShowSetupMenu(welcome := false) {
+    if !IsObject(SetupGui)
+        BuildSetupMenu()
+    SetupGui["Title"].Text := welcome ? "✦ Welcome!" : "✦ Setup your routine"
+    for i, row in SetupRows()
+        SetupGui["Row" i].Text := "   " row[1] (row[2] ? "    ✓" : "    · default")
+    SetupGui["Cooldown"].Text := "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎"
+    SetupGui.Show("AutoSize Center")
+}
+
+BuildSetupMenu() {
+    global SetupGui
     SetupGui := Gui("+AlwaysOnTop +ToolWindow -DPIScale", "FAA Setup")
     SetupGui.BackColor := Tc("160F1E")
     SetupGui.MarginX := 18
     SetupGui.MarginY := 16
     SetupGui.SetFont("s12 bold c" Tc("F7D4E8"), "Segoe UI")
-    SetupGui.Add("Text", "w384", welcome ? "✦ Welcome!" : "✦ Setup your routine")
+    SetupGui.Add("Text", "w384 vTitle")
     SetupGui.SetFont("s9 norm c" Tc("BFAACF"))
     SetupGui.Add("Text", "w384 y+6", "Record your own buttons once: the macro then works on any screen. Each part can be redone at any time. Items you skip keep their default position.")
 
-    rows := [
-        ["🎣   Water spot", IsRecorded("Fishing_Settings", "WaterRatioX"), RecordWater],
-        ["🟩   Click to Fish button", IsRecorded("Routine", "ClickToFish"), RecordClickToFish],
-        ["🟢   Auto Fish button", IsRecorded("Routine", "AutoFish"), RecordAutoFish],
-        ["⚡   Ability button (ready colour)", IsRecorded("Routine", "AbilityButton"), RecordAbilityButton],
-        ["🧛   Event character slot (Hallows Eve)", IsRecorded("Routine", "EventSlot"), RecordEventSlot],
-        ["🛒   Boost shop", IsRecorded("Routine", "Boost.Close"), RecordBoostShop],
-        ["🌙   Selene's shop", IsRecorded("Routine", "Selene.Close"), RecordSeleneShop],
-        ["♻   Rebirth", IsRecorded("Routine", "Rebirth.Confirm"), RecordRebirth]
-    ]
     SetupGui.SetFont("s10 norm c" Tc("F2E6F7"))
-    for row in rows {
-        btn := SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   " row[1] (row[2] ? "    ✓" : "    · default"))
-        btn.OnEvent("Click", SetupHandler(row[3]))
-    }
-    SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎").OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
+    for i, row in SetupRows()
+        SetupGui.Add("Text", "w384 h32 y+8 0x200 vRow" i " Background" Tc("2A1D36")).OnEvent("Click", SetupHandler(row[3]))
+    SetupGui.Add("Text", "w384 h32 y+8 0x200 vCooldown Background" Tc("2A1D36")).OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
     SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎃   Hallows Eve banner (drag a box)").OnEvent("Click", (*) => (SetupGui.Hide(), CalibrateEventArea()))
     SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎨   Widget theme    " Themes[ThemeId].name "  ▸").OnEvent("Click", (*) => ShowThemeMenu())
     SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🔧   Options && potions to buy  ▸").OnEvent("Click", (*) => (SetupGui.Hide(), ShowOptions()))
@@ -1569,7 +1575,6 @@ ShowSetupMenu(welcome := false) {
     SetupGui.Add("Text", "w384 h26 y+8 Center 0x200", "Close").OnEvent("Click", (*) => SetupGui.Hide())
     SetupGui.SetFont("s8 norm")
     SetupGui.Add("Text", "w384 y+6 Center", "⚠ You use this macro at your own risk.  ⓘ Read the terms").OnEvent("Click", (*) => ShowInfo())
-    SetupGui.Show("AutoSize Center")
 }
 
 ShortLabel(label) => Trim(RegExReplace(RegExReplace(label, "Potion|Lvl", ""), "\s+", " "))
@@ -1595,8 +1600,10 @@ AddToggle(gui, opts, label, section, key, def := 1) {
 
 ShowOptions() {
     global OptionsGui
-    if IsObject(OptionsGui)
-        OptionsGui.Destroy()
+    if IsObject(OptionsGui) {
+        OptionsGui.Show()
+        return
+    }
 
     OptionsGui := Gui("+AlwaysOnTop +ToolWindow -DPIScale", "FAA Options")
     OptionsGui.BackColor := Tc("160F1E")

@@ -1,4 +1,4 @@
-# Fish an Anime RNG (FAA) Macro & HUD Widget v4.5
+# Fish an Anime RNG (FAA) Macro & HUD Widget v4.6
 
 AutoHotkey v2 macro for the Roblox game **Fish an Anime RNG**. A single version runs on any screen (desktop, laptop, any resolution): you record your own buttons once, in game.
 
@@ -51,7 +51,7 @@ FAA Macro is a free, unofficial, fan-made tool, provided as is, without any warr
 
 It clicks and buys in the game for you. A game update, lag, a changed shop layout or a bug can make it click the wrong button, buy the wrong item, spend your in-game currency or open a Robux purchase window.
 
-By using the widget and the macro, you accept to do so at your own risk. The developer is not responsible for any unwanted purchase, any loss of items or currency, or any action taken against your account. Using macros may go against Roblox or game rules.
+By using the widget and the macro, you accept to do so at your own risk. The developer is not responsible for any unwanted purchase, any loss of items or currency, or any action taken against your account.
 
 ## 📜 Credits & License
 
