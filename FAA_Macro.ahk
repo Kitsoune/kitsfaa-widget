@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.4"
+global AppVersion := "4.5"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -68,6 +68,7 @@ global IsHallowsEveActive := false
 global EventCharOut := false
 global HallowsEndTick := 0
 global HallowsEveMissCount := 0
+global HallowsAwayUntil := 0
 global LastOcrCheckTick := 0
 
 global WizardRunning := false
@@ -77,6 +78,10 @@ global WizardPrompt := ""
 global WizardTicks := 0
 global WizardScrollEnabled := false
 global SetupGui := ""
+global OptionsGui := ""
+global DisclaimerText := "FAA Macro is a free, unofficial, fan-made tool, provided as is, without any warranty.`n`n"
+    . "It clicks and buys in the game for you. A game update, lag, a changed shop layout or a bug can make it click the wrong button, buy the wrong item, spend your in-game currency or open a Robux purchase window.`n`n"
+    . "By using the widget and the macro, you accept to do so at your own risk. The developer is not responsible for any unwanted purchase, any loss of items or currency, or any action taken against your account. Using macros may go against Roblox or game rules."
 
 global DefaultPoints := Map(
     "Boost.Cash1", "0,0.2744,0.4653", "Boost.Cash2", "0,0.4541,0.4653", "Boost.Cash3", "0,0.6328,0.4653",
@@ -137,8 +142,9 @@ WidgetGui.MarginY := 0
 if FileExist(ThemeImage())
     WidgetGui.Add("Picture", "x0 y0 w452 h326", ThemeImage())
 
-AddText("x126 y21 w200 h20 Center", "FISH AN ANIME RNG", "F7D4E8", "s10 bold")
+AddText("x106 y21 w196 h20 Center", "FISH AN ANIME RNG", "F7D4E8", "s10 bold")
 AddText("x126 y41 w200 h14 Center", "KITS Progress Inc. · v" AppVersion, "A88BB5", "s7")
+AddText("x304 y21 w18 h20 Center", "ⓘ", "C9A0C9", "s9 bold").OnEvent("Click", (*) => ShowInfo())
 AddText("x322 y21 w20 h20 Center", "✕", "C9A0C9", "s9 bold").OnEvent("Click", (*) => ExitApp())
 
 for i, label in ["BOOST SHOP", "SELENE", "ROD ABILITY", "HALLOWS EVE", "AUTO FISH"]
@@ -172,8 +178,16 @@ OnExit(SaveWidgetPos)
 
 WidgetGui.Show(InitialWidgetPos() " w452 h326 NoActivate")
 WinSetTransColor("010101", WidgetGui)
+
+if !IniInt("Widget", "DisclaimerAccepted", 0) {
+    if (MsgBox(DisclaimerText "`n`nDo you accept these terms?", "FAA Macro · Disclaimer", "YesNo Icon! 0x40000") != "Yes")
+        ExitApp()
+    IniWrite(1, IniPath, "Widget", "DisclaimerAccepted")
+}
+
 SetTimer(TimerSecondTick, 1000)
-SetTimer(CheckForUpdate, -3000)
+if IniInt("Updates", "CheckOnStart", 1)
+    SetTimer(CheckForUpdate, -3000)
 
 if (IniRead(IniPath, "Routine", "SetupShown", "0") = "0") {
     IniWrite(1, IniPath, "Routine", "SetupShown")
@@ -197,6 +211,8 @@ FormatMMSS(sec) => Format("{:02d}:{:02d}", sec // 60, Mod(sec, 60))
 SetFontColor(ctrl, color, weight := "bold") => ctrl.SetFont("c" Tc(color) " " weight)
 
 Tc(color) => Themes[ThemeId].colors.Has(color) ? Themes[ThemeId].colors[color] : color
+
+ShowInfo() => MsgBox("FAA Macro v" AppVersion " · KITS Progress Inc.`nTheme: " Themes[ThemeId].name "`n`n" DisclaimerText, "FAA Macro · Info", "Iconi 0x40000")
 
 ThemeImage() => A_ScriptDir "\assets\themes\" ThemeId "\widget_full.bmp"
 
@@ -671,22 +687,72 @@ ParseEventDuration(text) {
     return best
 }
 
+GetEventSlot() {
+    parts := StrSplit(IniRead(IniPath, "Routine", "EventSlot", ""), ",", " `t")
+    if (parts.Length != 4 || !IsNumber(parts[1]) || !IsNumber(parts[2]) || !IsInteger(parts[3]) || !IsInteger(parts[4]))
+        return ""
+    return {x: Float(parts[1]), y: Float(parts[2]), out: Integer(parts[3]), away: Integer(parts[4])}
+}
+
+EventCharState(rc, slot) {
+    color := SampleArea(rc, slot)
+    dOut := ColorDist(color, slot.out)
+    dAway := ColorDist(color, slot.away)
+    if (Min(dOut, dAway) > Max(AutoFishColorTolerance, ColorDist(slot.out, slot.away) * 0.45))
+        return "unknown"
+    return dOut <= dAway ? "out" : "away"
+}
+
+FocusRoblox() {
+    rc := RobloxClient()
+    if !rc.hwnd
+        return false
+    Loop 3 {
+        WinActivate("ahk_id " rc.hwnd)
+        if WinWaitActive("ahk_id " rc.hwnd, , 0.5)
+            return true
+    }
+    try Log("Hallows Eve: Roblox is not in front ('" WinGetTitle("A") "'), key not sent")
+    return false
+}
+
+PressEventKey(wantOut) {
+    Sleep(120)
+    PressHotbarSlot(wantOut || NormalCharSlot <= 0 || NormalCharSlot = EventCharSlot ? EventCharSlot : NormalCharSlot)
+}
+
 SetEventChar(wantOut) {
     global EventCharOut
-    if (wantOut = EventCharOut)
+    slot := GetEventSlot()
+    if !IsObject(slot) {
+        if (wantOut = EventCharOut || !FocusRoblox())
+            return
+        PressEventKey(wantOut)
+        EventCharOut := wantOut
+        Log(wantOut ? "Hallows Eve: event character OUT" : "Hallows Eve: event character AWAY")
         return
-    ActivateRoblox()
-    Sleep(150)
-    PressHotbarSlot(wantOut || NormalCharSlot <= 0 || NormalCharSlot = EventCharSlot ? EventCharSlot : NormalCharSlot)
-    Sleep(150)
-    EventCharOut := wantOut
-    Log(wantOut ? "Hallows Eve: event character OUT" : "Hallows Eve: event character AWAY")
+    }
+    rc := RobloxClient()
+    Loop 3 {
+        state := EventCharState(rc, slot)
+        if (state = (wantOut ? "out" : "away")) {
+            if (EventCharOut != wantOut)
+                Log(wantOut ? "Hallows Eve: event character OUT (seen on the hotbar)" : "Hallows Eve: event character AWAY (seen on the hotbar)")
+            EventCharOut := wantOut
+            return
+        }
+        if (state = "unknown" || !FocusRoblox())
+            return
+        PressEventKey(wantOut)
+        Sleep(700)
+    }
+    Log("Hallows Eve: the event character is still " (wantOut ? "away" : "out") " after 3 key presses")
 }
 
 HallowsLeftSeconds() => HallowsEndTick ? Max(0, (HallowsEndTick - A_TickCount) // 1000) : 0
 
 CheckHallowsEveEvent() {
-    global IsHallowsEveActive, HallowsEveMissCount, HallowsEndTick
+    global IsHallowsEveActive, HallowsEveMissCount, HallowsEndTick, HallowsAwayUntil
     if (!EnableHallowsEve || IsExecutingShop)
         return
 
@@ -713,7 +779,12 @@ CheckHallowsEveEvent() {
         return
     }
 
-    if (!IsHallowsEveActive || HallowsLeftSeconds() > 0)
+    if !IsHallowsEveActive {
+        if (IsRunning && A_TickCount < HallowsAwayUntil)
+            SetEventChar(false)
+        return
+    }
+    if (HallowsLeftSeconds() > 0)
         return
     HallowsEveMissCount++
     if (HallowsEveMissCount < (HallowsEndTick ? 1 : 3))
@@ -721,6 +792,7 @@ CheckHallowsEveEvent() {
     IsHallowsEveActive := false
     HallowsEveMissCount := 0
     HallowsEndTick := 0
+    HallowsAwayUntil := A_TickCount + 60000
     SetHallowsHud(false)
     Log("Hallows Eve ended")
     if IsRunning
@@ -1298,6 +1370,24 @@ RecordClickToFish() {
     return true
 }
 
+RecordEventSlot() {
+    global EventCharOut
+    r := CapturePoint("EVENT CHARACTER SLOT (Hallows Eve)`nTake your event character OUT (hotbar slot " EventCharSlot "), aim at the part of its slot that changes colour when it is held (usually the border), then press ENTER.`nThe macro puts it away once to learn both colours.")
+    if !IsObject(r)
+        return !Cancelled(r)
+    rc := RobloxClient()
+    outColor := SampleButton(rc, r, 300)
+    PressHotbarSlot(EventCharSlot)
+    awayColor := SampleButton(rc, r, 900)
+    if (ColorDist(outColor, awayColor) < 30) {
+        MsgBox("Could not see a difference at that spot.`n`nOUT " outColor "  ·  AWAY " awayColor "`n`nRecord it again from SETUP while aiming at the slot border.", "FAA Setup", "Icon!")
+        return true
+    }
+    IniWrite(r.x "," r.y "," outColor "," awayColor, IniPath, "Routine", "EventSlot")
+    EventCharOut := false
+    return true
+}
+
 RecordAbilityButton() {
     r := CapturePoint("ROD ABILITY BUTTON`nWait until your ability button (e.g. 'Forgotten Call [V]') is GREEN / ready, aim at its middle, then press ENTER.`nThe macro then uses the ability once.")
     if !IsObject(r)
@@ -1449,33 +1539,100 @@ ShowSetupMenu(welcome := false) {
     SetupGui.MarginX := 18
     SetupGui.MarginY := 16
     SetupGui.SetFont("s12 bold c" Tc("F7D4E8"), "Segoe UI")
-    SetupGui.Add("Text", "w320", welcome ? "✦ Welcome!" : "✦ Setup your routine")
+    SetupGui.Add("Text", "w384", welcome ? "✦ Welcome!" : "✦ Setup your routine")
     SetupGui.SetFont("s9 norm c" Tc("BFAACF"))
-    SetupGui.Add("Text", "w320 y+6", "Record your own buttons once: the macro then works on any screen. Each part can be redone at any time. Items you skip keep their default position.")
+    SetupGui.Add("Text", "w384 y+6", "Record your own buttons once: the macro then works on any screen. Each part can be redone at any time. Items you skip keep their default position.")
 
     rows := [
         ["🎣   Water spot", IsRecorded("Fishing_Settings", "WaterRatioX"), RecordWater],
         ["🟩   Click to Fish button", IsRecorded("Routine", "ClickToFish"), RecordClickToFish],
         ["🟢   Auto Fish button", IsRecorded("Routine", "AutoFish"), RecordAutoFish],
         ["⚡   Ability button (ready colour)", IsRecorded("Routine", "AbilityButton"), RecordAbilityButton],
+        ["🧛   Event character slot (Hallows Eve)", IsRecorded("Routine", "EventSlot"), RecordEventSlot],
         ["🛒   Boost shop", IsRecorded("Routine", "Boost.Close"), RecordBoostShop],
         ["🌙   Selene's shop", IsRecorded("Routine", "Selene.Close"), RecordSeleneShop],
         ["♻   Rebirth", IsRecorded("Routine", "Rebirth.Confirm"), RecordRebirth]
     ]
     SetupGui.SetFont("s10 norm c" Tc("F2E6F7"))
     for row in rows {
-        btn := SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   " row[1] (row[2] ? "    ✓" : "    · default"))
+        btn := SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   " row[1] (row[2] ? "    ✓" : "    · default"))
         btn.OnEvent("Click", SetupHandler(row[3]))
     }
-    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎").OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
-    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎃   Hallows Eve banner (drag a box)").OnEvent("Click", (*) => (SetupGui.Hide(), CalibrateEventArea()))
-    SetupGui.Add("Text", "w320 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎨   Widget theme    " Themes[ThemeId].name "  ▸").OnEvent("Click", (*) => ShowThemeMenu())
+    SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   ⏱   Ability cooldown    " FormatMMSS(RodAbilityCooldownSeconds) "  ✎").OnEvent("Click", (*) => (SetupGui.Hide(), EditAbilityCooldown()))
+    SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎃   Hallows Eve banner (drag a box)").OnEvent("Click", (*) => (SetupGui.Hide(), CalibrateEventArea()))
+    SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🎨   Widget theme    " Themes[ThemeId].name "  ▸").OnEvent("Click", (*) => ShowThemeMenu())
+    SetupGui.Add("Text", "w384 h32 y+8 0x200 Background" Tc("2A1D36"), "   🔧   Options && potions to buy  ▸").OnEvent("Click", (*) => (SetupGui.Hide(), ShowOptions()))
 
     SetupGui.SetFont("s10 bold cFFFFFF")
-    SetupGui.Add("Text", "w320 h36 y+14 Center 0x200 Background" Tc("B0569A"), "▶  Record everything").OnEvent("Click", SetupHandler(RecordWater, RecordAutoFish, RecordClickToFish, RecordBoostShop, RecordSeleneShop, RecordRebirth))
+    SetupGui.Add("Text", "w384 h36 y+14 Center 0x200 Background" Tc("B0569A"), "▶  Record everything").OnEvent("Click", SetupHandler(RecordWater, RecordAutoFish, RecordClickToFish, RecordBoostShop, RecordSeleneShop, RecordRebirth))
     SetupGui.SetFont("s9 norm c" Tc("8C7799"))
-    SetupGui.Add("Text", "w320 h26 y+8 Center 0x200", "Close").OnEvent("Click", (*) => SetupGui.Hide())
+    SetupGui.Add("Text", "w384 h26 y+8 Center 0x200", "Close").OnEvent("Click", (*) => SetupGui.Hide())
+    SetupGui.SetFont("s8 norm")
+    SetupGui.Add("Text", "w384 y+6 Center", "⚠ You use this macro at your own risk.  ⓘ Read the terms").OnEvent("Click", (*) => ShowInfo())
     SetupGui.Show("AutoSize Center")
+}
+
+ShortLabel(label) => Trim(RegExReplace(RegExReplace(label, "Potion|Lvl", ""), "\s+", " "))
+
+PaintToggle(ctrl, label, on) {
+    ctrl.Text := "  " (on ? "✓" : "✗") "   " label
+    ctrl.SetFont("c" Tc(on ? "7EE8C8" : "8C7799"))
+}
+
+FlipToggle(ctrl, label, section, key, def) {
+    on := !IniInt(section, key, def)
+    IniWrite(on ? 1 : 0, IniPath, section, key)
+    LoadConfig()
+    PaintToggle(ctrl, label, on)
+    RefreshAutoFishText()
+}
+
+AddToggle(gui, opts, label, section, key, def := 1) {
+    ctrl := gui.Add("Text", opts " 0x200 Background" Tc("2A1D36"))
+    PaintToggle(ctrl, label, IniInt(section, key, def))
+    ctrl.OnEvent("Click", (*) => FlipToggle(ctrl, label, section, key, def))
+}
+
+ShowOptions() {
+    global OptionsGui
+    if IsObject(OptionsGui)
+        OptionsGui.Destroy()
+
+    OptionsGui := Gui("+AlwaysOnTop +ToolWindow -DPIScale", "FAA Options")
+    OptionsGui.BackColor := Tc("160F1E")
+    OptionsGui.MarginX := 18
+    OptionsGui.MarginY := 16
+    OptionsGui.SetFont("s12 bold c" Tc("F7D4E8"), "Segoe UI")
+    OptionsGui.Add("Text", "w330", "✦ Options")
+    OptionsGui.SetFont("s9 norm c" Tc("BFAACF"))
+    OptionsGui.Add("Text", "w330 y+6", "Click a line to turn it on or off. Changes apply right away.")
+
+    OptionsGui.SetFont("s10 norm")
+    for row in [
+        ["♻   Auto rebirth (every " RebirthIntervalMinutes " min)", "Auto_Rebirth", "EnableAutoRebirth", 1],
+        ["🎃   Hallows Eve event character", "Hallows_Eve", "EnableHallowsEve", 1],
+        ["⚡   Rod ability", "Rod_Ability", "EnableRodAbility", 1],
+        ["🟢   Fishing watchdog", "Auto_Fish", "EnableWatchdog", 1],
+        ["🔔   Check for updates on launch", "Updates", "CheckOnStart", 1],
+        ["🔊   Sound beeps", "Sound_Settings", "EnableSoundBeep", 0]
+    ]
+        AddToggle(OptionsGui, "xm w330 h30 y+6", row[1], row[2], row[3], row[4])
+
+    OptionsGui.SetFont("s10 bold c" Tc("F7D4E8"))
+    OptionsGui.Add("Text", "xm w330 y+16", "🛒 Boost potions to buy")
+    OptionsGui.SetFont("s9 norm")
+    for i, it in BoostItems
+        AddToggle(OptionsGui, "w106 h28 " (Mod(i - 1, 3) ? "x+6 yp" : "xm y+6"), ShortLabel(it.label), it.section, it.key)
+
+    OptionsGui.SetFont("s10 bold c" Tc("F7D4E8"))
+    OptionsGui.Add("Text", "xm w330 y+16", "🌙 Selene potions to buy")
+    OptionsGui.SetFont("s9 norm")
+    for i, it in SeleneItems
+        AddToggle(OptionsGui, "w162 h28 " (Mod(i - 1, 2) ? "x+6 yp" : "xm y+6"), ShortLabel(it.label), it.section, it.key)
+
+    OptionsGui.SetFont("s9 norm c" Tc("8C7799"))
+    OptionsGui.Add("Text", "xm w330 h26 y+12 Center 0x200", "Close").OnEvent("Click", (*) => OptionsGui.Hide())
+    OptionsGui.Show("AutoSize Center")
 }
 
 F1:: ToggleMacroState()
