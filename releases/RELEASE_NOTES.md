@@ -1,9 +1,9 @@
-# ✦ Fish an Anime RNG · Release v4.6
+# ✦ Fish an Anime RNG · Release v4.7
 
-## 🩹 Fixes
-* Fixed a crash ("Invalid memory read/write") that could close the widget when opening **⚙ SETUP** again after the Options window. The Setup and Options windows are now created once and simply shown again.
-* Disclaimer text updated.
+## 🎃 Hallows Eve: Hell's Gates is no longer mistaken for it
+* The **Hell's Gates** banner also talks about "Dracula" mutations, so the macro took it for Hallows Eve and took the event character out.
+* Words that only appear on Hell's Gates (Gates, Nightmare, Gems, Falling Stars, Luck Boosted) now block the detection. Hallows Eve detection itself is unchanged.
 
 ## 📦 Download
 
-**[FAA-Macro-v4.6.zip](FAA-Macro-v4.6.zip)**: unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed). If you already have v4.4 or v4.5, the macro offers to update itself on launch.
+**[FAA-Macro-v4.7.zip](FAA-Macro-v4.7.zip)**: unzip anywhere, then double-click `START_MACRO.bat` (it installs AutoHotkey v2 if needed). If you already have v4.4 or later, the macro offers to update itself on launch.
