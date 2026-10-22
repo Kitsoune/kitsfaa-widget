@@ -9,7 +9,7 @@ CoordMode("ToolTip", "Screen")
 SendMode("Event")
 SetMouseDelay(2)
 
-global AppVersion := "4.7"
+global AppVersion := "4.8"
 global IniPath := A_ScriptDir "\config.ini"
 global IsRunning := false
 global IsExecutingShop := false
@@ -640,9 +640,8 @@ DetectHallowsEveInRect(screenX, screenY, screenW, screenH) {
 ClassifyEventText(allText) {
     squashed := SquashOcr(allText)
 
-    for word in ["gate", "nightmare", "gems", "falling", "boosted"]
-        if InStr(squashed, word)
-            return {found: false, method: "Hell's Gates (" word ")", text: allText, hasTitle: false, hasDesc: false}
+    if RegExMatch(squashed, "g[ae]te|nightmare|gems|f[a-z]?[lt]{1,2}ing|[ob]lood|luckand|boosted", &hell)
+        return {found: false, method: "Hell's Gates (" hell[0] ")", text: allText, hasTitle: false, hasDesc: false}
 
     hasDraculaMechanic := (InStr(squashed, "dracul") || InStr(squashed, "racula"))
         && (InStr(squashed, "turn") || InStr(squashed, "held") || InStr(squashed, "character"))
